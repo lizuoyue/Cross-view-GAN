@@ -263,8 +263,9 @@ class L2RAllDataLoader(Dataset):
         for img_name in self.img_all:
             if img_name[-13:] == '_street_rgb.png':
                 self.img_id.append(img_name[:-13])
+        print(self.img_all)
         print(self.img_id)
-        input()
+        input(root_dir)
 
         self.root_dir = root_dir
         self.train = train
