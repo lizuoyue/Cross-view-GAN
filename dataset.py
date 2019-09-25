@@ -241,6 +241,8 @@ class L2RDataLoader(Dataset):
 
 def transferImage(filename, norm = True):
     img = io.imread(filename).astype(np.uint8)
+    if len(img.shape) == 2:
+        img = img[..., np.newaxis]
     img = transforms.ToTensor()(img)
     if norm:
         img = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img).float()      
@@ -263,8 +265,6 @@ class L2RAllDataLoader(Dataset):
         for img_name in self.img_all:
             if img_name.endswith('_street_rgb.png'):
                 self.img_id.append(img_name.replace('_street_rgb.png', ''))
-        print(self.img_id)
-        input(root_dir)
 
         self.root_dir = root_dir
         self.train = train
