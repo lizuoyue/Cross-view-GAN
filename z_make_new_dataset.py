@@ -1,7 +1,6 @@
 from PIL import Image
 import glob
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 import tqdm
 

@@ -8,7 +8,6 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from skimage import io, transform, color
 from skimage.transform import resize
-import matplotlib.pyplot as plt
 import time
 
 from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel, L2RAllModel
