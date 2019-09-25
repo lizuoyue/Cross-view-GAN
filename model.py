@@ -351,7 +351,7 @@ class L2RAllModel:
             self.optimizers.extend(self.optimizer_Ds)
 
     def set_input(self, input):
-    	self.real_semantic = input['street_label']
+        self.real_semantic = input['street_label']
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
         self.g_output_gt = input['street_rgb'].to(self.device)
         self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(5)]
