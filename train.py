@@ -46,7 +46,7 @@ def train_L2R_Zuoyue():
     # load model
     model = L2RAllModel()
     model.initialize(opt)
-    model.load_networks(-1)
+    #model.load_networks(-1)
 
     # do training
     for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):
