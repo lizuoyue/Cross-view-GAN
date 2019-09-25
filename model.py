@@ -432,9 +432,10 @@ class L2RAllModel:
 
     def save_networks(self, epoch):
         torch.save(self.netG.state_dict(), self.save_dir +'/model_G_'+str(epoch)+'.pt')
-        torch.save(self.netG.state_dict(), self.save_dir +'/model_G_latest.pt') 
-        torch.save(self.netD.state_dict(), self.save_dir +'/model_D_'+str(epoch)+'.pt')
-        torch.save(self.netD.state_dict(), self.save_dir +'/model_D_latest.pt') 
+        torch.save(self.netG.state_dict(), self.save_dir +'/model_G_latest.pt')
+        for i in range(5):
+            torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt')
+            torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_latest.pt'%i) 
 
     # load models from the disk
     def load_networks(self, epoch):
@@ -442,14 +443,16 @@ class L2RAllModel:
             self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_'+str(epoch)+'.pt',
             map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
-                self.netD.load_state_dict(torch.load(self.save_dir +'/model_D_'+str(epoch)+'.pt',
-                map_location=lambda storage, loc: storage.cuda(0)))            
+                for i in range(5):
+                    self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt',
+                    map_location=lambda storage, loc: storage.cuda(0)))            
         else:
             self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_latest.pt',
             map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
-                self.netD.load_state_dict(torch.load(self.save_dir +'/model_D_latest.pt',
-                map_location=lambda storage, loc: storage.cuda(0)))  
+                for i in range(5):
+                    self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_latest.pt'%i,
+                    map_location=lambda storage, loc: storage.cuda(0)))  
 
 
 
