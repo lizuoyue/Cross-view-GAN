@@ -9,7 +9,7 @@ import torchvision
 from torchvision import transforms, utils
 from skimage import io, transform, color
 from skimage.transform import resize
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import time
 import cv2
 

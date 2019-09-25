@@ -14,7 +14,7 @@ import torch
 import random
 from skimage.morphology import label
 import pandas as pd
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 
 
 # Base Configuration class
