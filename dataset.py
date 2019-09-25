@@ -261,9 +261,8 @@ class L2RAllDataLoader(Dataset):
         self.img_id = []
         self.img_all = [f for f in os.listdir(root_dir) if os.path.isfile(os.path.join(root_dir,f))]
         for img_name in self.img_all:
-            if img_name[-13:] == '_street_rgb.png':
-                self.img_id.append(img_name[:-13])
-        print(self.img_all)
+            if img_name.endswith('_street_rgb.png'):
+                self.img_id.append(img_name.replace('_street_rgb.png', ''))
         print(self.img_id)
         input(root_dir)
 
