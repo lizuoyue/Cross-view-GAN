@@ -11,7 +11,7 @@ from torchvision import transforms, utils
 from skimage import io, transform, color
 from skimage.transform import resize
 from utils import Option
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 from sklearn.model_selection import train_test_split
 import re
 
