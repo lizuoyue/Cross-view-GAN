@@ -11,11 +11,73 @@ from skimage.transform import resize
 import matplotlib.pyplot as plt
 import time
 
-from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel
+from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel, L2RAllModel
 from utils import Option
-from dataset import R2DDataLoader, D2LDataLoader, L2RDataLoader, DLRDataLoader, RDLRDataLoader, DLLDataLoader
+from dataset import R2DDataLoader, D2LDataLoader, L2RDataLoader, DLRDataLoader, RDLRDataLoader, DLLDataLoader, L2RAllDataLoader
 
-root = 'F:/DevelopCenter/CNN/ICCV2019'
+root = '/local/zoli/xiaohu_iccv2019'
+
+
+
+
+
+
+
+
+
+def train_L2R_Zuoyue():
+    # set options
+    opt = Option()
+    opt.root_dir = root+'/dataset/L2R_Zuoyue'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
+    opt.gpu_ids = [0]
+    opt.batch_size = 16
+    opt.coarse = False
+    opt.pool_size = 0
+    opt.no_lsgan = True
+
+    # load data  
+    root_dir_train = opt.root_dir + '/train'    
+    dataset_train = L2RDataLoader(root_dir=root_dir_train, train=True, coarse=opt.coarse)
+    data_loader_train = DataLoader(dataset_train,batch_size=opt.batch_size,
+                                shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
+
+    print(opt)
+
+    # load model
+    model = L2RModel()
+    model.initialize(opt)
+    model.load_networks(-1)
+
+    # do training
+    for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):
+        file = open(opt.root_dir+'/logs.txt', 'a')
+        for idx_batch, data_batch in enumerate(data_loader_train):
+            print(idx_batch)
+            model.set_input(data_batch)
+            model.optimize_parameters()
+            print('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data) 
+            + ', train loss_D_Loss: ' + str(model.loss_D.data) )
+        file.write('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data)
+        + ', train loss_D_Loss: ' + str(model.loss_D.data)  + '\n')
+        file.close()
+
+        # save
+        if epoch % 10 == 0:
+            model.save_networks(epoch)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def train_R2D():
     # set options
@@ -273,5 +335,6 @@ if __name__ == '__main__':
     #train_D2L()  # street depth to street semantic
     #train_L2R()  # street semantic to street rgb
     #train_DLR()  # street depth to semantic to rgb, 3 in 1
-    train_RDLR()  # satellite rgb to street depth to semantic to rgb, 4 in 1
+    #train_RDLR()  # satellite rgb to street depth to semantic to rgb, 4 in 1
     #train_DLL()  # satellite depth to satellite semantic to street semantic, 3 in 1
+    train_L2R_Zuoyue()

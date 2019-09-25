@@ -329,7 +329,9 @@ class L2RAllModel:
         self.netG = networks.define_G(5, 3, opt.ngf, opt.netG, opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.is_train:
-            self.netD = networks.define_D(6, opt.ndf, opt.netD,
+            self.netDs = [None, None, None, None, None]
+            for i in range(5):
+                self.netDs[i] = networks.define_D(4, opt.ndf, opt.netD,
                                           opt.n_layers_d, opt.norm_G_D, opt.no_lsgan, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.is_train:
@@ -341,16 +343,18 @@ class L2RAllModel:
             self.optimizers = []
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizer_D = torch.optim.Adam(self.netD.parameters(),
-                                                lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
-            self.optimizers.append(self.optimizer_D)
+            self.optimizer_Ds = [None, None, None, None, None]
+            for i in range(5):
+                self.optimizer_Ds[i] = torch.optim.Adam(self.netDs[i].parameters(),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizers.extend(self.optimizer_Ds)
 
     def set_input(self, input):
     	self.real_semantic = input['street_label']
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
         self.g_output_gt = input['street_rgb'].to(self.device)
-        self.g_masks = [(input['street_label'] == i).int().to(self.device) for i in range(5)]
+        self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(5)]
         self.img_id = input['img_id']
 
     def set_requires_grad(self, nets, requires_grad=False):
@@ -365,44 +369,62 @@ class L2RAllModel:
         self.g_output = self.netG(self.g_input)
 
     def backward_D(self):
-        # Fake
-        # stop backprop to the generator by detaching fake_B
-        fake_LR = torch.cat((self.real_L, self.fake_R), 1)
-        pred_fake = self.netD(fake_LR.detach())
-        self.loss_D_fake = self.criterionGAN(pred_fake, False)
+        self.loss_D = 0
+        for i in range(5):
+            mask = self.g_masks[i]
+            mask_3 = torch.cat([mask, mask, mask], 1)
 
-        # Real
-        real_LR = torch.cat((self.real_L, self.real_R), 1)
-        pred_real = self.netD(real_LR)
-        self.loss_D_real = self.criterionGAN(pred_real, True)
+            # Fake
+            # stop backprop to the generator by detaching fake_B
+            masked_fake = mask_3 * self.g_output
+            fake = torch.cat([mask, masked_fake], 1)
+            pred_fake = self.netDs[i](fake.detach())
+            loss_D_fake = self.criterionGAN(pred_fake, False)
 
-        # Combined loss
-        self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
+            # Real
+            masked_real = mask_3 * self.g_output_gt
+            real = torch.cat([mask, masked_real], 1)
+            pred_real = self.netDs[i](real)
+            loss_D_real = self.criterionGAN(pred_real, True)
+
+            # Combined loss
+            self.loss_D += (loss_D_fake + loss_D_real) * 0.5
 
         self.loss_D.backward()
 
     def backward_G(self):
-        # First, G(A) should fake the discriminator
-        fake_LR = torch.cat((self.real_L, self.fake_R), 1)
-        pred_fake = self.netD(fake_LR)
-        self.loss_G_GAN = self.criterionGAN(pred_fake, True)
+        self.loss_G_GAN = 0
+        self.loss_G_Loss = 0
 
-        # Second, G(A) = B
-        self.loss_G_Loss = self.criterionL1(self.real_R, self.fake_R) * self.lambda_L1
+        for i in range(5):
+            # First, G(A) should fake the discriminator
+            mask = self.g_masks[i]
+            mask_3 = torch.cat([mask, mask, mask], 1)
+            masked_fake = mask_3 * self.g_output
+            fake = torch.cat([mask, masked_fake], 1)
+            pred_fake = self.netDs[i](fake)
+            self.loss_G_GAN += self.criterionGAN(pred_fake, True)
+
+            # Second, G(A) = B
+            masked_real = mask_3 * self.g_output_gt
+            self.loss_G_Loss += self.criterionL1(masked_real, masked_fake) * self.lambda_L1
+
         self.loss_G = self.loss_G_GAN + self.loss_G_Loss
         self.loss_G.backward()
 
     def optimize_parameters(self):
         self.forward()
         # update D
-        self.set_requires_grad([self.netD, self.netG], False)
-        self.set_requires_grad(self.netD, True)
-        self.optimizer_D.zero_grad()
+        self.set_requires_grad(self.netDs + [self.netG], False)
+        self.set_requires_grad(self.netDs, True)
+        for i in range(5):
+            self.optimizer_Ds[i].zero_grad()
         self.backward_D()
-        self.optimizer_D.step()
+        for i in range(5):
+            self.optimizer_Ds[i].step()
 
         # update G
-        self.set_requires_grad([self.netD, self.netG], False)
+        self.set_requires_grad(self.netDs + [self.netG], False)
         self.set_requires_grad(self.netG, True)
         self.optimizer_G.zero_grad()
         self.backward_G()
