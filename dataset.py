@@ -227,7 +227,90 @@ class L2RDataLoader(Dataset):
         else:
             return {'L': img_label,
                     'Proj_R': img_proj_rgb,
-                    'img_id': self.img_id[idx]}            
+                    'img_id': self.img_id[idx]}
+
+
+
+
+
+
+
+
+
+
+
+def transferImage(filename, norm = True):
+    img = io.imread(filename).astype(np.uint8)
+    img = transforms.ToTensor()(img)
+    if norm:
+        img = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img).float()      
+    return img
+
+
+class L2RAllDataLoader(Dataset):
+    def __init__(self, root_dir, train=True, coarse=True):
+        """
+        Args:
+        :param root_dir (string): Directory with all the images
+        :param img_id (list): lists of image id
+        :param train: if equals true, then read training set, so the output is image, mask and imgId
+                      if equals false, then read testing set, so the output is image and imgId
+        :param transform (callable, optional): Optional transform to be applied on a sample
+        """
+        # get data
+        self.img_id = []
+        self.img_all = [f for f in os.listdir(root_dir) if os.path.isfile(os.path.join(root_dir,f))]
+        for img_name in self.img_all:
+            if img_name[-13:] == '_street_rgb.png':
+                self.img_id.append(img_name[:-13])
+
+        self.root_dir = root_dir
+        self.train = train
+        self.coarse = coarse
+
+    def __len__(self):
+        return len(self.img_id)
+
+    def __getitem__(self, idx):
+        if self.train:
+            street_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
+            street_label = transferImage(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png', norm = False)
+            proj_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
+            proj_depth = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png', norm = False).float()
+            sate_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
+        else:
+            assert(False)
+
+        if self.train:
+            return {
+                'street_rgb': street_rgb,
+                'street_label': street_label,
+                'proj_rgb': proj_rgb,
+                'proj_depth': proj_depth,
+                'sate_rgb': sate_rgb,
+                'img_id': self.img_id[idx]
+            }
+        else:
+            assert(False)       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Load Data RGB to Depth data
