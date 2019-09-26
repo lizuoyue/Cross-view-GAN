@@ -17,12 +17,97 @@ from os import listdir
 from os.path import isfile, join
 import re
 
-from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel
+from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel, L2RAllModel
 from utils import Option
-from dataset import R2DDataLoader, D2LDataLoader, L2RDataLoader, DLRDataLoader, RDLRDataLoader, DLLDataLoader
+from dataset import R2DDataLoader, D2LDataLoader, L2RDataLoader, DLRDataLoader, RDLRDataLoader, DLLDataLoader, L2RAllDataLoader
 from geo_process_layer import depth2voxel, voxel2pano
 
-root = 'F:/DevelopCenter/CNN/ICCV2019'
+root = '/local/zoli/xiaohu_iccv2019'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def test_L2RAll():
+    # set options
+    opt = Option()
+    opt.root_dir = root+'/dataset/L2R_Zuoyue'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
+    opt.gpu_ids = [0]
+    opt.batch_size = 16
+    opt.coarse = False
+    opt.pool_size = 0
+    opt.no_lsgan = True
+    opt.is_train = False
+
+    # load data  
+    root_dir_train = opt.root_dir + '/train'
+    dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=False, coarse=opt.coarse)
+    data_loader_test = DataLoader(dataset_train,batch_size=opt.batch_size,
+                                shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
+
+    # load model
+    model = L2RAllModel()
+    model.initialize(opt)
+    model.load_networks(-1)
+
+    # do testung
+    for idx_batch, data_batch in enumerate(data_loader_test):
+        print(idx_batch)
+        model.set_input(data_batch)
+        model.forward()
+        g_output = model.g_output.detach().cpu()
+        n,c,h,w = g_output.size()
+        for i in range(0, n):
+            rgb = g_output[i,:,:,:] * 0.5 + 0.5
+            img_id = data_batch['img_id'][i]
+            # save image
+            path_rgb = opt.root_dir + '/' + img_id + '_pred_rgb_dll.png'
+            torchvision.utils.save_image(rgb.float(), path_rgb)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def test_R2D():
 # set options
@@ -294,5 +379,6 @@ if __name__ == '__main__':
     #test_D2L()  # street depth to street semantic
     #test_L2R()  # street semantic to street rgb
     #test_DLR()  # street depth to semantic to rgb, 3 in 1
-    test_RDLR()  # satellite rgb to street depth to semantic to rgb, 4 in 1
+    #test_RDLR()  # satellite rgb to street depth to semantic to rgb, 4 in 1
     #test_DLL()  # satellite depth to satellite semantic to street semantic, 3 in 1
+    test_L2RAll()
