@@ -281,7 +281,10 @@ class L2RAllDataLoader(Dataset):
             proj_depth = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png', norm = False).float()
             sate_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
         else:
-            assert(False)
+            street_label = transferImage(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png', norm = False)
+            proj_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
+            proj_depth = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png', norm = False).float()
+            sate_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
 
         if self.train:
             return {
@@ -293,7 +296,13 @@ class L2RAllDataLoader(Dataset):
                 'img_id': self.img_id[idx]
             }
         else:
-            assert(False)       
+            return {
+                'street_label': street_label,
+                'proj_rgb': proj_rgb,
+                'proj_depth': proj_depth,
+                'sate_rgb': sate_rgb,
+                'img_id': self.img_id[idx]
+            }     
 
 
 

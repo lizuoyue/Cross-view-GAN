@@ -353,9 +353,10 @@ class L2RAllModel:
     def set_input(self, input):
         self.real_semantic = input['street_label']
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
-        self.g_output_gt = input['street_rgb'].to(self.device)
         self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(5)]
         self.img_id = input['img_id']
+        if self.is_train:
+            self.g_output_gt = input['street_rgb'].to(self.device)
 
     def set_requires_grad(self, nets, requires_grad=False):
         if not isinstance(nets, list):
