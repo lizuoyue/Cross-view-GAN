@@ -391,6 +391,8 @@ class L2RAllModel:
 
             # Combined loss
             loss = (loss_D_fake + loss_D_real) * 0.5
+            print(loss.shape, loss.dtype)
+            print(loss)
             self.loss_Ds.append(loss)
 
         self.loss_D = torch.sum(torch.cat(self.loss_Ds))
