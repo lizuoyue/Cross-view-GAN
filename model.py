@@ -318,6 +318,7 @@ class L2RAllModel:
         return 'L2RAllModel'
 
     def initialize(self, opt):
+        self.num_classes = 5 # number of semantic classes
         self.direction = opt.direction
         self.is_train = opt.is_train
         self.gpu_ids = opt.gpu_ids
@@ -329,10 +330,10 @@ class L2RAllModel:
         self.netG = networks.define_G(5, 3, opt.ngf, opt.netG, opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.is_train:
-            self.netDs = [None, None, None, None, None]
-            for i in range(5):
-                self.netDs[i] = networks.define_D(4, opt.ndf, opt.netD,
-                                          opt.n_layers_d, opt.norm_G_D, opt.no_lsgan, opt.init_type, opt.init_gain, self.gpu_ids)
+            self.netDs = []
+            for i in range(self.num_classes):
+                self.netDs.append(networks.define_D(4, opt.ndf, opt.netD,
+                                          opt.n_layers_d, opt.norm_G_D, opt.no_lsgan, opt.init_type, opt.init_gain, self.gpu_ids))
 
         if self.is_train:
             # define loss functions
@@ -344,16 +345,16 @@ class L2RAllModel:
             self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
-            self.optimizer_Ds = [None, None, None, None, None]
-            for i in range(5):
-                self.optimizer_Ds[i] = torch.optim.Adam(self.netDs[i].parameters(),
-                                                lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer_Ds = []
+            for i in range(self.num_classes):
+                self.optimizer_Ds.append(torch.optim.Adam(self.netDs[i].parameters(),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999)))
             self.optimizers.extend(self.optimizer_Ds)
 
     def set_input(self, input):
         self.real_semantic = input['street_label']
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
-        self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(5)]
+        self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(self.num_classes)]
         self.img_id = input['img_id']
         if self.is_train:
             self.g_output_gt = input['street_rgb'].to(self.device)
@@ -370,8 +371,8 @@ class L2RAllModel:
         self.g_output = self.netG(self.g_input)
 
     def backward_D(self):
-        self.loss_D = 0
-        for i in range(5):
+        self.loss_Ds = []
+        for i in range(self.num_classes):
             mask = self.g_masks[i]
             mask_3 = torch.cat([mask, mask, mask], 1)
 
@@ -389,28 +390,33 @@ class L2RAllModel:
             loss_D_real = self.criterionGAN(pred_real, True)
 
             # Combined loss
-            self.loss_D += (loss_D_fake + loss_D_real) * 0.5
+            loss = (loss_D_fake + loss_D_real) * 0.5
+            self.loss_Ds.append(loss)
 
+        self.loss_D = torch.sum(torch.cat(self.loss_Ds))
         self.loss_D.backward()
 
-    def backward_G(self):
-        self.loss_G_GAN = 0
-        self.loss_G_Loss = 0
 
-        for i in range(5):
+    def backward_G(self):
+        self.loss_Gs = []
+        for i in range(self.num_classes):
             # First, G(A) should fake the discriminator
             mask = self.g_masks[i]
             mask_3 = torch.cat([mask, mask, mask], 1)
+
             masked_fake = mask_3 * self.g_output
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake)
-            self.loss_G_GAN += self.criterionGAN(pred_fake, True)
+            loss_G_GAN = self.criterionGAN(pred_fake, True)
 
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
-            self.loss_G_Loss += self.criterionL1(masked_real, masked_fake) * self.lambda_L1
+            loss_G_Loss = self.criterionL1(masked_real, masked_fake) * self.lambda_L1
+            
+            loss_G = loss_G_GAN + loss_G_Loss
+            self.loss_Gs.append(loss_G)
 
-        self.loss_G = self.loss_G_GAN + self.loss_G_Loss
+        self.loss_G = torch.sum(torch.cat(self.loss_Gs))
         self.loss_G.backward()
 
     def optimize_parameters(self):
@@ -418,10 +424,10 @@ class L2RAllModel:
         # update D
         self.set_requires_grad(self.netDs + [self.netG], False)
         self.set_requires_grad(self.netDs, True)
-        for i in range(5):
+        for i in range(self.num_classes):
             self.optimizer_Ds[i].zero_grad()
         self.backward_D()
-        for i in range(5):
+        for i in range(self.num_classes):
             self.optimizer_Ds[i].step()
 
         # update G
@@ -434,7 +440,7 @@ class L2RAllModel:
     def save_networks(self, epoch):
         torch.save(self.netG.state_dict(), self.save_dir +'/model_G_'+str(epoch)+'.pt')
         torch.save(self.netG.state_dict(), self.save_dir +'/model_G_latest.pt')
-        for i in range(5):
+        for i in range(self.num_classes):
             torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt')
             torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_latest.pt'%i) 
 
@@ -444,14 +450,14 @@ class L2RAllModel:
             self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_'+str(epoch)+'.pt',
             map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
-                for i in range(5):
+                for i in range(self.num_classes):
                     self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt',
                     map_location=lambda storage, loc: storage.cuda(0)))            
         else:
             self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_latest.pt',
             map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
-                for i in range(5):
+                for i in range(self.num_classes):
                     self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_latest.pt'%i,
                     map_location=lambda storage, loc: storage.cuda(0)))  
 
