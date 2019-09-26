@@ -55,10 +55,10 @@ def train_L2R_Zuoyue():
             print(idx_batch)
             model.set_input(data_batch)
             model.optimize_parameters()
-            print('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data) 
-            + ', train loss_D_Loss: ' + str(model.loss_D.data) )
-        file.write('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data)
-        + ', train loss_D_Loss: ' + str(model.loss_D.data)  + '\n')
+            print('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data / opt.num_classes) 
+            + ', train loss_D_Loss: ' + str(model.loss_D.data / opt.num_classes) )
+        file.write('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data / opt.num_classes)
+        + ', train loss_D_Loss: ' + str(model.loss_D.data / opt.num_classes)  + '\n')
         file.close()
 
         # save

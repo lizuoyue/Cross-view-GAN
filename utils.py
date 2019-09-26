@@ -93,6 +93,7 @@ class Option(Config):
     pool_size = 50
     lambda_L1 = 10.0
     fine_tune_sidewalk = False
+    num_classes = 5
 
     pin_memory = True   	# use pinned (page-locked) memory. when using CUDA, set to True
 

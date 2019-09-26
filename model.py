@@ -318,7 +318,7 @@ class L2RAllModel:
         return 'L2RAllModel'
 
     def initialize(self, opt):
-        self.num_classes = 5 # number of semantic classes
+        self.num_classes = opt.num_classes # number of semantic classes
         self.direction = opt.direction
         self.is_train = opt.is_train
         self.gpu_ids = opt.gpu_ids
@@ -391,11 +391,9 @@ class L2RAllModel:
 
             # Combined loss
             loss = (loss_D_fake + loss_D_real) * 0.5
-            print(loss.shape, loss.dtype)
-            print(loss)
             self.loss_Ds.append(loss)
 
-        self.loss_D = torch.sum(torch.cat(self.loss_Ds))
+        self.loss_D = torch.sum(torch.stack(self.loss_Ds))
         self.loss_D.backward()
 
 
@@ -418,7 +416,7 @@ class L2RAllModel:
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
 
-        self.loss_G = torch.sum(torch.cat(self.loss_Gs))
+        self.loss_G = torch.sum(torch.stack(self.loss_Gs))
         self.loss_G.backward()
 
     def optimize_parameters(self):
