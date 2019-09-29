@@ -381,13 +381,17 @@ class L2RAllModel:
             # stop backprop to the generator by detaching fake_B
             masked_fake = mask_3 * self.g_output
             fake = torch.cat([mask, masked_fake], 1)
+            print('D input', fake.shape)
             pred_fake = self.netDs[i](fake.detach())
+            print('D output', pred_fake.shape)
             loss_D_fake = self.criterionGAN(pred_fake, False)
 
             # Real
             masked_real = mask_3 * self.g_output_gt
             real = torch.cat([mask, masked_real], 1)
+            print('D input', real.shape)
             pred_real = self.netDs[i](real)
+            print('D output', pred_real.shape)
             loss_D_real = self.criterionGAN(pred_real, True)
 
             # Combined loss

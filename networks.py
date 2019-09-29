@@ -139,24 +139,23 @@ class GANLoss(nn.Module):
         self.register_buffer('real_label', torch.tensor(target_real_label))
         self.register_buffer('fake_label', torch.tensor(target_fake_label))
         if use_lsgan:
-            print('Use MSE Loss')
+            print('Use MSE Loss.')
             self.loss = nn.MSELoss()
         else:
-            print('Use BCE Loss')
+            print('Use BCE Loss.')
             self.loss = nn.BCELoss()
 
-    def get_target_tensor(self, input, target_is_real):
+    def get_target_tensor(self, pred, target_is_real):
         if target_is_real:
             target_tensor = self.real_label
         else:
             target_tensor = self.fake_label
-        return target_tensor.expand_as(input)
+        return target_tensor.expand_as(pred)
 
-    def __call__(self, input, target_is_real):
-        target_tensor = self.get_target_tensor(input, target_is_real)
-        print('The BCE loss takes input', input)
+    def __call__(self, pred, target_is_real):
+        target_tensor = self.get_target_tensor(pred, target_is_real)
         input()
-        return self.loss(input, target_tensor)
+        return self.loss(pred, target_tensor)
 
 
 # Defines the generator that consists of Resnet blocks between a few
