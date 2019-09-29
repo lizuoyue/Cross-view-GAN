@@ -87,13 +87,13 @@ class Option(Config):
     beta1 = 0.5             # momentum term of adam
     epoch_count = 1         # the starting epoch count
     niter = 100             # # of iter at starting learning rate
-    niter_decay = 1000       # # of iter to linearly decay learning rate to zero
+    niter_decay = 300       # # of iter to linearly decay learning rate to zero
     n_layers_d = 3          # only used if net_type_d == n_layers
     no_lsgan = True         # do *not* use least square GAN, if false, use vanilla GAN
     pool_size = 50
     lambda_L1 = 10.0
     fine_tune_sidewalk = False
-    train_class = [0,1,2,3,4]
+    train_class = [2]
 
     pin_memory = True   	# use pinned (page-locked) memory. when using CUDA, set to True
 
