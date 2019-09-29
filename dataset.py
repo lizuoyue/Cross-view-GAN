@@ -239,6 +239,20 @@ class L2RDataLoader(Dataset):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def transferImage(filename, norm = True):
     img = io.imread(filename).astype(np.uint8)
     if len(img.shape) == 2:
@@ -287,6 +301,9 @@ class L2RAllDataLoader(Dataset):
             sate_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
 
         if self.train:
+            print(street_label.shape, street_label.dtype)
+            print(torch.min(street_label), torch.max(street_label))
+            input('Wo He Wo De Zu Guo')
             return {
                 'street_rgb': street_rgb,
                 'street_label': street_label,
