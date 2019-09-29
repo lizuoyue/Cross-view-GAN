@@ -253,15 +253,21 @@ class L2RDataLoader(Dataset):
 
 
 
-def transferImage(filename, norm = True):
+def transferToScaledFloatTensor(filename):
     img = io.imread(filename).astype(np.uint8)
     if len(img.shape) == 2:
         img = img[..., np.newaxis]
     img = transforms.ToTensor()(img)
-    if norm:
-        img = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img).float()      
+    img = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img).float()      
     return img
 
+def transferToIntTensor(filename):
+    img = io.imread(filename).astype(np.uint8)
+    if len(img.shape) == 2:
+        img = img[..., np.newaxis]
+    img = img.transpose([2, 0, 1])
+    img = torch.from_numpy(img)
+    return img
 
 class L2RAllDataLoader(Dataset):
     def __init__(self, root_dir, train=True, coarse=True):
@@ -289,20 +295,21 @@ class L2RAllDataLoader(Dataset):
 
     def __getitem__(self, idx):
         if self.train:
-            street_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
-            street_label = transferImage(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png', norm = False)
-            proj_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
-            proj_depth = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png', norm = False).float()
-            sate_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
+            street_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
+            street_label = transferToIntTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
+            proj_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
+            proj_depth = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png')
+            sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
         else:
-            street_label = transferImage(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png', norm = False)
-            proj_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
-            proj_depth = transferImage(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png', norm = False).float()
-            sate_rgb = transferImage(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
+            street_label = transferToIntTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
+            proj_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
+            proj_depth = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png')
+            sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
 
         if self.train:
-            print(street_label.shape, street_label.dtype)
-            print(torch.min(street_label), torch.max(street_label))
+            print('Label:')
+            print('\t', street_label.shape, street_label.dtype)
+            print('\t', torch.min(street_label).item(), torch.max(street_label).item())
             input('Wo He Wo De Zu Guo')
             return {
                 'street_rgb': street_rgb,
