@@ -154,7 +154,7 @@ class GANLoss(nn.Module):
 
     def __call__(self, pred, target_is_real):
         target_tensor = self.get_target_tensor(pred, target_is_real)
-        print('Pred', torch.max(pred), torch.min(pred))
+        print('Pred Min Max', torch.min(pred).data, torch.max(pred).data)
         input('Press any key to continue...')
         return self.loss(pred, target_tensor)
 

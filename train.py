@@ -41,8 +41,6 @@ def train_L2R_Zuoyue():
     data_loader_train = DataLoader(dataset_train,batch_size=opt.batch_size,
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
 
-    print(opt)
-
     # load model
     model = L2RAllModel()
     model.initialize(opt)

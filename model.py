@@ -356,6 +356,12 @@ class L2RAllModel:
         self.real_semantic = input['street_label']
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
         self.g_masks = [(input['street_label'] == self.train_class[i]).float().to(self.device) for i in range(self.num_classes)]
+        print('Mask:')
+        for mask in self.g_masks:
+            for i in range(mask.shape[0]):
+                print(torch.sum(mask[i]).data, end=' ')
+        input('End of Mask')
+
         self.img_id = input['img_id']
         if self.is_train:
             self.g_output_gt = input['street_rgb'].to(self.device)
@@ -420,7 +426,7 @@ class L2RAllModel:
             loss_G_Loss = loss_G_Loss / torch.sum(mask)
             print('Sum of mask', torch.sum(mask))
             input('Press any hehehehe...')
-            
+
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
 
