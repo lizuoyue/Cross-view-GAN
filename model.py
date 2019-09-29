@@ -339,7 +339,7 @@ class L2RAllModel:
         if self.is_train:
             # define loss functions
             self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
-            self.criterionL1 = torch.nn.L1Loss()
+            self.criterionL1 = torch.nn.L1Loss(reduction='sum')
 
             # initialize optimizers
             self.optimizers = []
@@ -403,6 +403,8 @@ class L2RAllModel:
         for i in range(self.num_classes):
             # First, G(A) should fake the discriminator
             mask = self.g_masks[i]
+            print(mask.shape)
+            input()
             mask_3 = torch.cat([mask, mask, mask], 1)
 
             masked_fake = mask_3 * self.g_output
@@ -413,6 +415,8 @@ class L2RAllModel:
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
             loss_G_Loss = self.criterionL1(masked_real, masked_fake) * self.lambda_L1
+            loss_G_Loss = loss_G_Loss / torch.sum(mask)
+            #loss_G_Loss = loss_G_Loss * torch.sum(torch.ones_like())
             
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
