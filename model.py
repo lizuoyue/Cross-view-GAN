@@ -359,9 +359,9 @@ class L2RAllModel:
         print('Mask:')
         print('  ', self.real_semantic.shape, self.real_semantic.dtype)
         print('  ', torch.min(self.real_semantic).item(), torch.max(self.real_semantic).item())
-        for mask in self.g_masks:
-            for i in range(mask.shape[0]):
-                print(torch.sum(mask[i]).item(), end=' ')
+        for i in range(self.g_masks[0].shape[0]):
+            for mask in self.g_masks:
+                print(int(torch.sum(mask[i]).item()), end=' ')
             print()
         input('End of Mask')
 
