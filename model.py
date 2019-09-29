@@ -356,14 +356,13 @@ class L2RAllModel:
         self.real_semantic = input['street_label']
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
         self.g_masks = [(input['street_label'] == self.train_class[i]).float().to(self.device) for i in range(self.num_classes)]
-        print('Mask:')
-        print('  ', self.real_semantic.shape, self.real_semantic.dtype)
-        print('  ', torch.min(self.real_semantic).item(), torch.max(self.real_semantic).item())
-        for i in range(self.g_masks[0].shape[0]):
-            for mask in self.g_masks:
-                print(int(torch.sum(mask[i]).item()), end=' ')
-            print()
-        input('End of Mask')
+        # print('Mask:')
+        # print('  ', self.real_semantic.shape, self.real_semantic.dtype)
+        # print('  ', torch.min(self.real_semantic).item(), torch.max(self.real_semantic).item())
+        # for i in range(self.g_masks[0].shape[0]):
+        #     for mask in self.g_masks:
+        #         print(int(torch.sum(mask[i]).item()), end=' ')
+        #     print()
 
         self.img_id = input['img_id']
         if self.is_train:
@@ -390,17 +389,13 @@ class L2RAllModel:
             # stop backprop to the generator by detaching fake_B
             masked_fake = mask_3 * self.g_output
             fake = torch.cat([mask, masked_fake], 1)
-            print('D input', fake.shape)
             pred_fake = self.netDs[i](fake.detach())
-            print('D output', pred_fake.shape)
             loss_D_fake = self.criterionGAN(pred_fake, False)
 
             # Real
             masked_real = mask_3 * self.g_output_gt
             real = torch.cat([mask, masked_real], 1)
-            print('D input', real.shape)
             pred_real = self.netDs[i](real)
-            print('D output', pred_real.shape)
             loss_D_real = self.criterionGAN(pred_real, True)
 
             # Combined loss
@@ -426,8 +421,8 @@ class L2RAllModel:
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
             loss_G_Loss = self.criterionL1(masked_real, masked_fake) * self.lambda_L1
-            loss_G_Loss = loss_G_Loss / torch.sum(mask)
-            print('Sum of mask', torch.sum(mask))
+            loss_G_Loss = loss_G_Loss
+            print('Sum of mask', torch.sum(mask).item(), mask.dtype)
             input('Press any hehehehe...')
 
             loss_G = loss_G_GAN + loss_G_Loss
