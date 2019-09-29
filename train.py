@@ -27,8 +27,8 @@ root = '/local/zoli/xiaohu_iccv2019'
 def train_L2R_Zuoyue():
     # set options
     opt = Option()
-    opt.root_dir = root+'/dataset/L2R_Zuoyue'
-    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
+    opt.root_dir = root+'/dataset/L2R_Zuoyue_Small'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Small'
     opt.gpu_ids = [0]
     opt.batch_size = 16
     opt.coarse = False
@@ -55,10 +55,10 @@ def train_L2R_Zuoyue():
             print(idx_batch)
             model.set_input(data_batch)
             model.optimize_parameters()
-            print('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data / opt.num_classes) 
-            + ', train loss_D_Loss: ' + str(model.loss_D.data / opt.num_classes) )
-        file.write('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data / opt.num_classes)
-        + ', train loss_D_Loss: ' + str(model.loss_D.data / opt.num_classes)  + '\n')
+            print('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data / model.num_classes) 
+            + ', train loss_D_Loss: ' + str(model.loss_D.data / model.num_classes) )
+        file.write('epoch: ' + str(epoch) + ', train loss_G_Loss: ' + str(model.loss_G.data / model.num_classes)
+        + ', train loss_D_Loss: ' + str(model.loss_D.data / model.num_classes)  + '\n')
         file.close()
 
         # save

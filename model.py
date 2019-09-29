@@ -318,7 +318,8 @@ class L2RAllModel:
         return 'L2RAllModel'
 
     def initialize(self, opt):
-        self.num_classes = opt.num_classes # number of semantic classes
+        self.train_class = opt.train_class
+        self.num_classes = len(self.train_class)
         self.direction = opt.direction
         self.is_train = opt.is_train
         self.gpu_ids = opt.gpu_ids
@@ -354,7 +355,7 @@ class L2RAllModel:
     def set_input(self, input):
         self.real_semantic = input['street_label']
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
-        self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(self.num_classes)]
+        self.g_masks = [(input['street_label'] == self.train_class[i]).float().to(self.device) for i in range(self.num_classes)]
         self.img_id = input['img_id']
         if self.is_train:
             self.g_output_gt = input['street_rgb'].to(self.device)
