@@ -41,8 +41,8 @@ root = '/local/zoli/xiaohu_iccv2019'
 def test_L2RAll():
     # set options
     opt = Option()
-    opt.root_dir = root+'/dataset/L2R_Zuoyue'
-    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
+    opt.root_dir = root+'/dataset/L2R_Zuoyue_Small'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Small'
     opt.gpu_ids = [0]
     opt.batch_size = 16
     opt.coarse = False
