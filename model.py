@@ -357,10 +357,12 @@ class L2RAllModel:
         self.g_input = torch.cat([input['street_label'].float(), input['proj_rgb'], input['proj_depth']], 1).to(self.device)
         self.g_masks = [(input['street_label'] == self.train_class[i]).float().to(self.device) for i in range(self.num_classes)]
         print('Mask:')
-        print(torch.min(self.real_semantic), torch.max(self.real_semantic))
+        print('  ', real_semantic.shape, real_semantic.dtype)
+        print('  ', torch.min(self.real_semantic).item(), torch.max(self.real_semantic).item())
         for mask in self.g_masks:
             for i in range(mask.shape[0]):
-                print(torch.sum(mask[i]).data, end=' ')
+                print(torch.sum(mask[i]).item(), end=' ')
+            print()
         input('End of Mask')
 
         self.img_id = input['img_id']

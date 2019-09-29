@@ -307,10 +307,9 @@ class L2RAllDataLoader(Dataset):
             sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
 
         if self.train:
-            print('Label:')
-            print('\t', street_label.shape, street_label.dtype)
-            print('\t', torch.min(street_label).item(), torch.max(street_label).item())
-            input('Wo He Wo De Zu Guo')
+            # print('Label:')
+            # print('  ', street_label.shape, street_label.dtype)
+            # print('  ', torch.min(street_label).item(), torch.max(street_label).item())
             return {
                 'street_rgb': street_rgb,
                 'street_label': street_label,
