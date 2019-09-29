@@ -403,8 +403,6 @@ class L2RAllModel:
         for i in range(self.num_classes):
             # First, G(A) should fake the discriminator
             mask = self.g_masks[i]
-            print(mask.shape)
-            input()
             mask_3 = torch.cat([mask, mask, mask], 1)
 
             masked_fake = mask_3 * self.g_output
@@ -416,7 +414,6 @@ class L2RAllModel:
             masked_real = mask_3 * self.g_output_gt
             loss_G_Loss = self.criterionL1(masked_real, masked_fake) * self.lambda_L1
             loss_G_Loss = loss_G_Loss / torch.sum(mask)
-            #loss_G_Loss = loss_G_Loss * torch.sum(torch.ones_like())
             
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
