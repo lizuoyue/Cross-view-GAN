@@ -65,7 +65,7 @@ class Option(Config):
     netD = 'basic'     # network for depth to rgb model
     num_workers = 1     	# number of threads for data loading
     shuffle = True      	# shuffle the data set
-    batch_size = 16         # GTX1060 3G Memory
+    batch_size = 8          # GTX1060 3G Memory
     epochs = 50			    # number of epochs to train
     is_train = True     	# True for training, False for making prediction
     sate_gsd = 0.5          # grand sampleing distance for satellite rgb image
