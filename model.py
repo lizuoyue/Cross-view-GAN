@@ -464,7 +464,10 @@ class L2RAllModel:
     def optimize_parameters(self):
         self.forward()
         # update D
-        self.set_requires_grad(self.netDs + [self.netG], False)
+        if self.use_multiple_G:
+            self.set_requires_grad(self.netGs, False)
+        else:
+            self.set_requires_grad(self.netG, False)
         self.set_requires_grad(self.netDs, True)
         for i in range(self.num_classes):
             self.optimizer_Ds[i].zero_grad()
@@ -473,15 +476,28 @@ class L2RAllModel:
             self.optimizer_Ds[i].step()
 
         # update G
-        self.set_requires_grad(self.netDs + [self.netG], False)
-        self.set_requires_grad(self.netG, True)
-        self.optimizer_G.zero_grad()
-        self.backward_G()
-        self.optimizer_G.step()
+        self.set_requires_grad(self.netDs, False)
+        if self.use_multiple_G:
+            self.set_requires_grad(self.netGs, True)
+            for i in range(self.num_classes):
+                self.optimizer_Gs[i].zero_grad()
+            self.backward_G()
+            for i in range(self.num_classes):
+                self.optimizer_Gs[i].step()
+        else:
+            self.set_requires_grad(self.netG, True)
+            self.optimizer_G.zero_grad()
+            self.backward_G()
+            self.optimizer_G.step()
 
     def save_networks(self, epoch):
-        torch.save(self.netG.state_dict(), self.save_dir +'/model_G_'+str(epoch)+'.pt')
-        torch.save(self.netG.state_dict(), self.save_dir +'/model_G_latest.pt')
+        if self.use_multiple_G:
+            for i in range(self.num_classes):
+                torch.save(self.netGs[i].state_dict(), self.save_dir +'/model_G%d_'%i+str(epoch)+'.pt')
+                torch.save(self.netGs[i].state_dict(), self.save_dir +'/model_G%d_latest.pt'%i)
+        else:
+            torch.save(self.netG.state_dict(), self.save_dir +'/model_G_'+str(epoch)+'.pt')
+            torch.save(self.netG.state_dict(), self.save_dir +'/model_G_latest.pt')
         for i in range(self.num_classes):
             torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt')
             torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_latest.pt'%i) 
@@ -489,15 +505,25 @@ class L2RAllModel:
     # load models from the disk
     def load_networks(self, epoch):
         if epoch >= 0:
-            self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_'+str(epoch)+'.pt',
-            map_location=lambda storage, loc: storage.cuda(0)))
+            if self.use_multiple_G:
+                for i in range(self.num_classes):
+                    self.netGs[i].load_state_dict(torch.load(self.save_dir +'/model_G%s_'%i+str(epoch)+'.pt',
+                    map_location=lambda storage, loc: storage.cuda(0)))
+            else:
+                self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_'+str(epoch)+'.pt',
+                map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
                 for i in range(self.num_classes):
                     self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt',
                     map_location=lambda storage, loc: storage.cuda(0)))            
         else:
-            self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_latest.pt',
-            map_location=lambda storage, loc: storage.cuda(0)))
+            if self.use_multiple_G:
+                for i in range(self.num_classes):
+                    self.netGs[i].load_state_dict(torch.load(self.save_dir +'/model_G%s_latest.pt'%i,
+                    map_location=lambda storage, loc: storage.cuda(0)))
+            else:
+                self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_latest.pt',
+                map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
                 for i in range(self.num_classes):
                     self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_latest.pt'%i,
