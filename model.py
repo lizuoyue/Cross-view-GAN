@@ -383,7 +383,7 @@ class L2RAllModel:
         self.g_input_rgbd = torch.cat([input['proj_rgb'], input['proj_depth']], 1).to(self.device)
         self.g_input_label = torch.nn.functional.one_hot(input['street_label'][:, 0, ...],
             num_classes=self.num_classes).float().to(self.device)
-        self.g_input_label = torch.permute(0, 3, 1, 2)
+        self.g_input_label = self.g_input_label.permute(0, 3, 1, 2)
         self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(self.num_classes)]
         if self.use_sate:
             self.e_input_rgb = input['sate_rgb'].to(self.device)
