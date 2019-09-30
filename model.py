@@ -407,6 +407,9 @@ class L2RAllModel:
 
     def forward(self):
         if self.use_sate:
+            print(self.g_input_rgbd.shape)
+            print(self.g_input_label.shape)
+            print(self.sate_ft.shape)
             h, w = self.g_input_label.shape[2:4]
             sate_ft = self.netE(self.e_input_rgb)
             self.sate_ft = torch.mean(sate_ft, dim=(2,3), keepdim=True)
