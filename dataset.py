@@ -261,12 +261,12 @@ def transferToScaledFloatTensor(filename):
     img = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img).float()      
     return img
 
-def transferToIntTensor(filename):
+def transferToLongTensor(filename):
     img = io.imread(filename).astype(np.uint8)
     if len(img.shape) == 2:
         img = img[..., np.newaxis]
     img = img.transpose([2, 0, 1])
-    img = torch.from_numpy(img)
+    img = torch.from_numpy(img).long()
     return img
 
 class L2RAllDataLoader(Dataset):
@@ -296,12 +296,12 @@ class L2RAllDataLoader(Dataset):
     def __getitem__(self, idx):
         if self.train:
             street_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
-            street_label = transferToIntTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
+            street_label = transferToLongTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
             proj_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
             proj_depth = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png')
             sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
         else:
-            street_label = transferToIntTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
+            street_label = transferToLongTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
             proj_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
             proj_depth = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png')
             sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
