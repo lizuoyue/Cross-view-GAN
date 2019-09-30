@@ -95,7 +95,7 @@ class Option(Config):
     fine_tune_sidewalk = False
 
     # Added by Zuoyue
-    train_class = [0,1,2,3,4]
+    num_classes = 5
     use_multiple_G = True
     use_sate = True
     sate_encoder_nc = 32
