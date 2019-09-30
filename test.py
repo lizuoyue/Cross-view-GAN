@@ -42,7 +42,7 @@ def test_L2RAll():
     # set options
     opt = Option()
     opt.root_dir = root+'/dataset/L2R_Zuoyue_Small'
-    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Small'
     opt.gpu_ids = [0]
     opt.batch_size = 16
     opt.coarse = False
@@ -66,7 +66,14 @@ def test_L2RAll():
         print(idx_batch)
         model.set_input(data_batch)
         model.forward()
-        g_output = model.g_output.detach().cpu()
+        if model.use_multiple_G:
+            li = []
+            for mask, g_out in zip(model.g_masks, model.g_outputs):
+                print(mask.item().shape)
+                print(g_out.item().shape)
+            continue
+        else:
+            g_output = model.g_output.detach().cpu()
         n,c,h,w = g_output.size()
         for i in range(0, n):
             rgb = g_output[i,:,:,:] * 0.5 + 0.5
