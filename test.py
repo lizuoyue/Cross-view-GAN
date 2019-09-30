@@ -69,8 +69,8 @@ def test_L2RAll():
         if model.use_multiple_G:
             li = []
             for mask, g_out in zip(model.g_masks, model.g_outputs):
-                print(mask.item().shape)
-                print(g_out.item().shape)
+                print(mask.shape)
+                print(g_out.shape)
             continue
         else:
             g_output = model.g_output.detach().cpu()
