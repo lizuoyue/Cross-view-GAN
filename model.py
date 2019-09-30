@@ -346,7 +346,7 @@ class L2RAllModel:
             self.netG = networks.define_G(input_nc, 3, opt.ngf, opt.netG, opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.use_sate:
-            self.netE = networks.define_E(3, self.sate_encoder_nc, n_downsampling=5, ngf=32, net_type='resnet_6blocks')
+            self.netE = networks.define_E(3, self.sate_encoder_nc, n_downsampling=5, ngf=32, net_type='resnet_6blocks', gpu_ids=self.gpu_ids)
 
         if self.is_train:
             self.netDs = []
