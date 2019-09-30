@@ -28,7 +28,7 @@ def train_L2R_Zuoyue():
     # set options
     opt = Option()
     opt.root_dir = root+'/dataset/L2R_Zuoyue'
-    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Sate'
     opt.gpu_ids = [0]
     opt.batch_size = 16
     opt.coarse = False

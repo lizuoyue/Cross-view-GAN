@@ -97,6 +97,8 @@ class Option(Config):
     # Added by Zuoyue
     train_class = [0,1,2,3,4]
     use_multiple_G = True
+    use_sate = True
+    sate_encoder_nc = 32
 
 
 

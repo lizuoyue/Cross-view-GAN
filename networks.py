@@ -211,6 +211,116 @@ class ResnetGenerator(nn.Module):
         return self.model(input)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def define_E(input_nc, output_nc, n_downsampling, ngf, net_type, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
+    net = None
+    norm_layer = get_norm_layer(norm_type=norm)
+
+    if net_type == 'resnet_9blocks':
+        net = ResnetEncoder(input_nc, output_nc, n_downsampling, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9)
+    elif net_type == 'resnet_6blocks':
+        net = ResnetEncoder(input_nc, output_nc, n_downsampling, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6)
+    else:
+        raise NotImplementedError('Generator model name [%s] is not recognized' % net_type)
+    return init_net(net, init_type, init_gain, gpu_ids)
+
+class ResnetEncoder(nn.Module):
+    def __init__(self, input_nc, output_nc, n_downsampling=4, ngf=32, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
+        assert(n_blocks >= 0)
+        super(ResnetEncoder, self).__init__()
+        self.input_nc = input_nc
+        self.output_nc = output_nc
+        self.ngf = ngf
+        if type(norm_layer) == functools.partial:
+            use_bias = norm_layer.func == nn.InstanceNorm2d
+        else:
+            use_bias = norm_layer == nn.InstanceNorm2d
+
+        model = [nn.ReflectionPad2d(3),
+                 nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0,
+                           bias=use_bias),
+                 norm_layer(ngf),
+                 nn.ReLU(True)]
+
+        for i in range(n_downsampling):
+            mult = 2**i
+            model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
+                                stride=2, padding=1, bias=use_bias),
+                      norm_layer(ngf * mult * 2),
+                      nn.ReLU(True)]
+
+        mult = 2**n_downsampling
+        for i in range(n_blocks):
+            model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
+
+        model += [nn.Conv2d(ngf * mult, output_nc, kernel_size=1, stride=1, padding=0, bias=use_bias)]
+
+        self.model = nn.Sequential(*model)
+
+    def forward(self, input):
+        return self.model(input)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Define a resnet block
 class ResnetBlock(nn.Module):
     def __init__(self, dim, padding_type, norm_layer, use_dropout, use_bias):
@@ -498,3 +608,17 @@ class XNet(nn.Module):
         output = F.sigmoid(output)
 
         return output
+
+
+if __name__ == '__main__':
+    norm_layer = get_norm_layer(norm_type='batch')
+    net = ResnetEncoder(3, 32, n_downsampling=5, ngf=32, norm_layer=norm_layer, use_dropout=False, n_blocks=9)
+    a = torch.Tensor(size=(1, 3, 256, 256))
+    b = net(a)
+    c = torch.mean(b, dim=(2,3), keepdim=True)
+    print(c.shape)
+
+
+
+
+
