@@ -318,8 +318,11 @@ class L2RAllModel:
         return 'L2RAllModel'
 
     def initialize(self, opt):
+        # Added
         self.train_class = opt.train_class
         self.num_classes = len(self.train_class)
+        self.use_multiple_G = opt.use_multiple_G
+
         self.direction = opt.direction
         self.is_train = opt.is_train
         self.gpu_ids = opt.gpu_ids
@@ -328,7 +331,13 @@ class L2RAllModel:
         self.lambda_L1 = opt.lambda_L1
 
         # load/define networks
-        self.netG = networks.define_G(5, 3, opt.ngf, opt.netG, opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+        if self.use_multiple_G:
+            self.netGs = []
+            for i in range(self.num_classes):
+                self.netGs.append(networks.define_G(5, 3, opt.ngf, opt.netG,
+                    opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids))
+        else:
+            self.netG = networks.define_G(5, 3, opt.ngf, opt.netG, opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.is_train:
             self.netDs = []
@@ -343,9 +352,17 @@ class L2RAllModel:
 
             # initialize optimizers
             self.optimizers = []
-            self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
+            if self.use_multiple_G:
+                self.optimizer_Gs = []
+                for i in range(self.num_classes):
+                    self.optimizer_Gs.append(torch.optim.Adam(self.netGs[i].parameters(),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999)))
+                self.optimizers.extend(self.optimizer_Gs)
+            else:
+                self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizers.append(self.optimizer_G)
+                self.optimizers.append(self.optimizer_G)
+
             self.optimizer_Ds = []
             for i in range(self.num_classes):
                 self.optimizer_Ds.append(torch.optim.Adam(self.netDs[i].parameters(),
@@ -377,7 +394,12 @@ class L2RAllModel:
                     param.requires_grad = requires_grad
 
     def forward(self):
-        self.g_output = self.netG(self.g_input)
+        if self.use_multiple_G:
+            self.g_outputs = []
+            for i in range(self.num_classes):
+                self.g_outputs.append(self.netGs[i](self.g_input))
+        else:
+            self.g_output = self.netG(self.g_input)
 
     def backward_D(self):
         self.loss_Ds = []
@@ -387,7 +409,11 @@ class L2RAllModel:
 
             # Fake
             # stop backprop to the generator by detaching fake_B
-            masked_fake = mask_3 * self.g_output
+            if self.use_multiple_G:
+                masked_fake = mask_3 * self.g_outputs[i]
+            else:
+                masked_fake = mask_3 * self.g_output
+
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake.detach())
             loss_D_fake = self.criterionGAN(pred_fake, False)
@@ -414,7 +440,11 @@ class L2RAllModel:
             mask_sum = torch.sum(mask)
             mask_3 = torch.cat([mask, mask, mask], 1)
 
-            masked_fake = mask_3 * self.g_output
+            if self.use_multiple_G:
+                masked_fake = mask_3 * self.g_outputs[i]
+            else:
+                masked_fake = mask_3 * self.g_output
+
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake)
             loss_G_GAN = self.criterionGAN(pred_fake, True)
