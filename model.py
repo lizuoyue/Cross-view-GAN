@@ -421,7 +421,6 @@ class L2RAllModel:
         self.img_id = input['img_id']
         if self.is_train:
             self.g_output_gt = input['street_rgb'].to(self.device)
-            self.g_outout_grad_gt = input['street_grad'].to(self.device)
 
     def set_requires_grad(self, nets, requires_grad=False):
         if not isinstance(nets, list):
