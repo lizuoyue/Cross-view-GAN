@@ -559,7 +559,7 @@ class L2RAllModel:
                 self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_latest.pt',
                 map_location=lambda storage, loc: storage.cuda(0)))
             if self.use_sate:
-                self.netG.load_state_dict(torch.load(self.save_dir +'/model_E_latest.pt',
+                self.netE.load_state_dict(torch.load(self.save_dir +'/model_E_latest.pt',
                 map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
                 for i in range(self.num_classes):
