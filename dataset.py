@@ -9,13 +9,12 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
-# from skimage import io, transform, color
-from skimage.color import rgb2gray
-# from skimage.transform import resize
-# from utils import Option
-# #import matplotlib.pylab as plt
-# from sklearn.model_selection import train_test_split
-# import re
+from skimage import io, transform, color
+from skimage.transform import resize
+from utils import Option
+#import matplotlib.pylab as plt
+from sklearn.model_selection import train_test_split
+import re
 
 
 # Load Data RGB to Depth data
