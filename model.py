@@ -310,17 +310,17 @@ class L2RModel:
 
 
 class GradComputer(object):
-    def __init__(self):
+    def __init__(self, device):
         self.kx = torch.Tensor(
             [[1, 0, -1],
             [2, 0, -2],
             [1, 0, -1]]
-        ).view((1,1,3,3))
+        ).view((1,1,3,3)).to(device)
         self.ky = torch.Tensor(
             [[1, 2, 1],
             [0, 0, 0],
             [-1, -2, -1]]
-        ).view((1,1,3,3))
+        ).view((1,1,3,3)).to(device)
         self.kx.requires_grad = False
         self.ky.requires_grad = False
 
@@ -344,7 +344,6 @@ class L2RAllModel:
         self.use_multiple_G = opt.use_multiple_G
         self.use_sate = opt.use_sate
         self.sate_encoder_nc = opt.sate_encoder_nc
-        self.GradComputer = GradComputer()
 
         self.direction = opt.direction
         self.is_train = opt.is_train
@@ -352,6 +351,8 @@ class L2RAllModel:
         self.save_dir = opt.checkpoints_dir
         self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')   
         self.lambda_L1 = opt.lambda_L1
+
+        self.GradComputer = GradComputer(self.device)
 
         if self.use_sate:
             input_nc = 3 + 1 + self.num_classes + self.sate_encoder_nc
