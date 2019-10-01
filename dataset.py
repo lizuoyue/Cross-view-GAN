@@ -310,7 +310,6 @@ class L2RAllDataLoader(Dataset):
             # print('  ', torch.min(street_label).item(), torch.max(street_label).item())
             return {
                 'street_rgb': street_rgb,
-                'street_grad': street_grad,
                 'street_label': street_label,
                 'proj_rgb': proj_rgb,
                 'proj_depth': proj_depth,
