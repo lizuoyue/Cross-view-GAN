@@ -97,7 +97,7 @@ class Option(Config):
     # Added by Zuoyue
     num_classes = 5
     use_multiple_G = True
-    use_sate = False
+    use_sate = True
     sate_encoder_nc = 32
 
 

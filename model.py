@@ -334,7 +334,7 @@ class L2RAllModel:
         if self.use_sate:
             input_nc = 3 + 1 + self.num_classes + self.sate_encoder_nc
         else:
-            input_nc = 3 + 1 + 1#self.num_classes
+            input_nc = 3 + 1 + self.num_classes
 
         # load/define networks
         if self.use_multiple_G:
@@ -491,6 +491,9 @@ class L2RAllModel:
             self.set_requires_grad(self.netGs, False)
         else:
             self.set_requires_grad(self.netG, False)
+        if self.use_sate:
+            self.set_requires_grad(self.netE, False)
+
         self.set_requires_grad(self.netDs, True)
         for i in range(self.num_classes):
             self.optimizer_Ds[i].zero_grad()
@@ -500,6 +503,8 @@ class L2RAllModel:
 
         # update G
         self.set_requires_grad(self.netDs, False)
+        if self.use_sate:
+            self.set_requires_grad(self.netE, True)
         if self.use_multiple_G:
             self.set_requires_grad(self.netGs, True)
             for i in range(self.num_classes):
@@ -521,6 +526,9 @@ class L2RAllModel:
         else:
             torch.save(self.netG.state_dict(), self.save_dir +'/model_G_'+str(epoch)+'.pt')
             torch.save(self.netG.state_dict(), self.save_dir +'/model_G_latest.pt')
+        if self.use_sate:
+            torch.save(self.netE.state_dict(), self.save_dir +'/model_E_'+str(epoch)+'.pt')
+            torch.save(self.netE.state_dict(), self.save_dir +'/model_E_latest.pt')
         for i in range(self.num_classes):
             torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt')
             torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_latest.pt'%i) 
@@ -535,6 +543,9 @@ class L2RAllModel:
             else:
                 self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_'+str(epoch)+'.pt',
                 map_location=lambda storage, loc: storage.cuda(0)))
+            if self.use_sate:
+                self.netE.load_state_dict(torch.load(self.save_dir +'/model_E_'+str(epoch)+'.pt',
+                map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
                 for i in range(self.num_classes):
                     self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt',
@@ -546,6 +557,9 @@ class L2RAllModel:
                     map_location=lambda storage, loc: storage.cuda(0)))
             else:
                 self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_latest.pt',
+                map_location=lambda storage, loc: storage.cuda(0)))
+            if self.use_sate:
+                self.netG.load_state_dict(torch.load(self.save_dir +'/model_E_latest.pt',
                 map_location=lambda storage, loc: storage.cuda(0)))
             if self.is_train:
                 for i in range(self.num_classes):

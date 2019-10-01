@@ -41,8 +41,8 @@ root = '/local/zoli/xiaohu_iccv2019'
 def test_L2RAll():
     # set options
     opt = Option()
-    opt.root_dir = root+'/dataset/L2R_Zuoyue_Small'
-    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
+    opt.root_dir = root+'/dataset/L2R_Zuoyue'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Sate'
     opt.gpu_ids = [0]
     opt.batch_size = 16
     opt.coarse = False
@@ -51,7 +51,7 @@ def test_L2RAll():
     opt.is_train = False
 
     # load data  
-    root_dir_train = opt.root_dir + '/train'
+    root_dir_train = opt.root_dir + '/test'
     dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=False, coarse=opt.coarse)
     data_loader_test = DataLoader(dataset_train,batch_size=opt.batch_size,
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
