@@ -6,14 +6,16 @@ opturations and data loading code for Kaggle Data Science Bowl 2018
 import os
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
-from skimage import io, transform, color
-from skimage.transform import resize
-from utils import Option
-#import matplotlib.pylab as plt
-from sklearn.model_selection import train_test_split
-import re
+# from skimage import io, transform, color
+from skimage.color import rgb2gray
+# from skimage.transform import resize
+# from utils import Option
+# #import matplotlib.pylab as plt
+# from sklearn.model_selection import train_test_split
+# import re
 
 
 # Load Data RGB to Depth data
@@ -250,10 +252,7 @@ class L2RDataLoader(Dataset):
 
 
 
-
-
-
-def transferToScaledFloatTensor(filename):
+def transferToScaledFloatTensor(filename, grad=False):
     img = io.imread(filename).astype(np.uint8)
     if len(img.shape) == 2:
         img = img[..., np.newaxis]
@@ -312,6 +311,7 @@ class L2RAllDataLoader(Dataset):
             # print('  ', torch.min(street_label).item(), torch.max(street_label).item())
             return {
                 'street_rgb': street_rgb,
+                'street_grad': street_grad,
                 'street_label': street_label,
                 'proj_rgb': proj_rgb,
                 'proj_depth': proj_depth,
@@ -589,4 +589,19 @@ class DLLDataLoader(Dataset):
             return {'sate_D': sate_depth,
                     'sate_L': sate_sem,
                     'ori': ori,
-                    'img_id': self.img_id[idx]} 
+                    'img_id': self.img_id[idx]}
+
+
+
+
+if __name__ == '__main__':
+    from PIL import Image
+    a = Image.fromarray(np.zeros((256,256,3),np.uint8))
+    #a = torch.Tensor(size=(256,256,3))
+    b = transforms.ToTensor()(a)
+    b = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(b).float()
+    #b = gradient_grayscale(a)
+    print(b.shape)
+
+
+

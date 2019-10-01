@@ -66,14 +66,7 @@ def test_L2RAll():
         print(idx_batch)
         model.set_input(data_batch)
         model.forward()
-        if model.use_multiple_G:
-            li = []
-            for mask, g_out in zip(model.g_masks, model.g_outputs):
-                mask_3 = torch.cat([mask, mask, mask], 1)
-                li.append(mask_3 * g_out)
-            g_output = torch.sum(torch.stack(li), dim=0).detach().cpu()
-        else:
-            g_output = model.g_output.detach().cpu()
+        g_output = model.g_output.detach().cpu()
         n,c,h,w = g_output.size()
         for i in range(0, n):
             rgb = g_output[i,:,:,:] * 0.5 + 0.5

@@ -5,6 +5,7 @@ from utils import ImagePool
 from scipy.ndimage.morphology import binary_closing, binary_erosion
 import cv2
 import numpy
+import torch.nn.functional as F
 
 from torch.autograd import Variable
 import torchvision
@@ -308,10 +309,30 @@ class L2RModel:
 
 
 
+class GradComputer(object):
+    def __init__(self):
+        self.kx = torch.Tensor(
+            [[1, 0, -1],
+            [2, 0, -2],
+            [1, 0, -1]]
+        ).view((1,1,3,3))
+        self.ky = torch.Tensor(
+            [[1, 2, 1],
+            [0, 0, 0],
+            [-1, -2, -1]]
+        ).view((1,1,3,3))
+        self.kx.requires_grad = False
+        self.ky.requires_grad = False
 
-
-
-
+    def run(img):
+        if img.shape[1] == 3:
+            im = 0.2125 * img[:,0:1,:,:] + 0.7154 * img[:,1:2,:,:] + 0.0721 * img[:,2:3,:,:]
+        else:
+            assert(img.shape[1] == 1)
+            im = img
+        G_x = F.conv2d(im, self.kx)
+        G_y = F.conv2d(im, self.ky)
+        return torch.sqrt(torch.pow(G_x,2)+ torch.pow(G_y,2))
 
 class L2RAllModel:
     def name(self):
@@ -323,6 +344,7 @@ class L2RAllModel:
         self.use_multiple_G = opt.use_multiple_G
         self.use_sate = opt.use_sate
         self.sate_encoder_nc = opt.sate_encoder_nc
+        self.GradComputer = GradComputer()
 
         self.direction = opt.direction
         self.is_train = opt.is_train
@@ -357,7 +379,8 @@ class L2RAllModel:
         if self.is_train:
             # define loss functions
             self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
-            self.criterionL1 = torch.nn.L1Loss(reduction='sum')
+            self.criterionL1_sum = torch.nn.L1Loss(reduction='sum')
+            self.criterionL1_mean = torch.nn.L1Loss(reduction='sum')
 
             # initialize optimizers
             self.optimizers = []
@@ -398,6 +421,7 @@ class L2RAllModel:
         self.img_id = input['img_id']
         if self.is_train:
             self.g_output_gt = input['street_rgb'].to(self.device)
+            self.g_outout_grad_gt = input['street_grad'].to(self.device)
 
     def set_requires_grad(self, nets, requires_grad=False):
         if not isinstance(nets, list):
@@ -421,6 +445,11 @@ class L2RAllModel:
             self.g_outputs = []
             for i in range(self.num_classes):
                 self.g_outputs.append(self.netGs[i](self.g_input))
+            li = []
+            for mask, g_out in zip(self.g_masks, self.g_outputs):
+                mask_3 = torch.cat([mask, mask, mask], 1)
+                li.append(mask_3 * g_out)
+            self.g_output = torch.sum(torch.stack(li), dim=0)
         else:
             self.g_output = self.netG(self.g_input)
 
@@ -474,12 +503,16 @@ class L2RAllModel:
 
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
-            loss_G_Loss = self.criterionL1(masked_real, masked_fake) * self.lambda_L1
+            loss_G_Loss = self.criterionL1_sum(masked_real, masked_fake) * self.lambda_L1
             loss_G_Loss = loss_G_Loss / torch.max(mask_sum, torch.ones_like(mask_sum))
-            # print('Sum of mask', mask_sum.item(), mask_sum.dtype)
 
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
+
+        # Grad loss
+        grad_pred = self.GradComputer.run(self.g_output)
+        grad_gt = self.GradComputer.run(self.g_output_gt)
+        self.loss_Gs.append(self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1)
 
         self.loss_G = torch.sum(torch.stack(self.loss_Gs))
         self.loss_G.backward()
