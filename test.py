@@ -42,7 +42,7 @@ def test_L2RAll():
     # set options
     opt = Option()
     opt.root_dir = root+'/dataset/L2R_Zuoyue_Small'
-    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Small'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue'
     opt.gpu_ids = [0]
     opt.batch_size = 16
     opt.coarse = False
