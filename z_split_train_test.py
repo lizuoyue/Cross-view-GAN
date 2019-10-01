@@ -10,7 +10,7 @@ mode = 'test'
 dataset_dir = '../dataset/L2R_Zuoyue/%s' % mode
 os.makedirs(dataset_dir, exist_ok = True)
 
-path = '../dataset/L2R_Zuoyue/train/*_street_sem2.png' % mode
+path = '../dataset/L2R_Zuoyue/train/*_street_sem2.png'
 files = glob.glob(path)
 random.shuffle(files)
 for file in tqdm.tqdm(files[:64]):
