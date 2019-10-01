@@ -324,7 +324,7 @@ class GradComputer(object):
         self.kx.requires_grad = False
         self.ky.requires_grad = False
 
-    def run(img):
+    def run(self, img):
         if img.shape[1] == 3:
             im = 0.2125 * img[:,0:1,:,:] + 0.7154 * img[:,1:2,:,:] + 0.0721 * img[:,2:3,:,:]
         else:
