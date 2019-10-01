@@ -332,7 +332,7 @@ class GradComputer(object):
             im = img
         G_x = F.conv2d(im, self.kx)
         G_y = F.conv2d(im, self.ky)
-        return torch.sqrt(torch.pow(G_x,2)+ torch.pow(G_y,2))
+        return torch.sqrt(torch.pow(G_x,2) + torch.pow(G_y,2))
 
 class L2RAllModel:
     def name(self):
@@ -512,6 +512,9 @@ class L2RAllModel:
         # Grad loss
         grad_pred = self.GradComputer.run(self.g_output)
         grad_gt = self.GradComputer.run(self.g_output_gt)
+        print(self.GradComputer.kx, self.GradComputer.ky)
+        print(torch.min(grad_pred).item(), torch.max(grad_pred).item())
+        print(torch.min(grad_gt).item(), torch.max(grad_gt).item())
         self.loss_Gs.append(self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1)
 
         self.loss_G = torch.sum(torch.stack(self.loss_Gs))
