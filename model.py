@@ -334,7 +334,7 @@ class L2RAllModel:
         if self.use_sate:
             input_nc = 3 + 1 + self.num_classes + self.sate_encoder_nc
         else:
-            input_nc = 3 + 1 + self.num_classes
+            input_nc = 3 + 1 + 1#self.num_classes
 
         # load/define networks
         if self.use_multiple_G:
@@ -381,9 +381,9 @@ class L2RAllModel:
     def set_input(self, input):
         self.real_semantic = input['street_label']
         self.g_input_rgbd = torch.cat([input['proj_rgb'], input['proj_depth']], 1).to(self.device)
-        self.g_input_label = torch.nn.functional.one_hot(input['street_label'][:, 0, ...],
-            num_classes=self.num_classes).float().to(self.device)
-        self.g_input_label = self.g_input_label.permute(0, 3, 1, 2)
+        #self.g_input_label = torch.nn.functional.one_hot(input['street_label'][:, 0, ...],
+        #    num_classes=self.num_classes).float().to(self.device)
+        self.g_input_label = input['street_label'].float().to(self.device)#self.g_input_label.permute(0, 3, 1, 2)
         self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(self.num_classes)]
         if self.use_sate:
             self.e_input_rgb = input['sate_rgb'].to(self.device)
@@ -413,12 +413,9 @@ class L2RAllModel:
             sate_ft = self.netE(self.e_input_rgb)
             self.sate_ft = torch.mean(sate_ft, dim=(2,3), keepdim=True)
             self.sate_ft = self.sate_ft.repeat(1, 1, h, w)
-            print(self.g_input_rgbd.shape)
-            print(self.g_input_label.shape)
-            print(self.sate_ft.shape)
-            self.g_input = torch.cat([self.g_input_rgbd, self.g_input_label, self.sate_ft], 1)
+            self.g_input = torch.cat([self.g_input_label, self.g_input_rgbd, self.sate_ft], 1)
         else:
-            self.g_input = torch.cat([self.g_input_rgbd, self.g_input_label], 1)
+            self.g_input = torch.cat([self.g_input_label, self.g_input_rgbd], 1)
 
         if self.use_multiple_G:
             self.g_outputs = []
