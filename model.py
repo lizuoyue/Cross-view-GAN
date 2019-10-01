@@ -381,7 +381,7 @@ class L2RAllModel:
             # define loss functions
             self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
             self.criterionL1_sum = torch.nn.L1Loss(reduction='sum')
-            self.criterionL1_mean = torch.nn.L1Loss(reduction='sum')
+            self.criterionL1_mean = torch.nn.L1Loss(reduction='mean')
 
             # initialize optimizers
             self.optimizers = []
@@ -512,9 +512,9 @@ class L2RAllModel:
         # Grad loss
         grad_pred = self.GradComputer.run(self.g_output)
         grad_gt = self.GradComputer.run(self.g_output_gt)
-        print(self.GradComputer.kx, self.GradComputer.ky)
-        print(torch.min(grad_pred).item(), torch.max(grad_pred).item())
-        print(torch.min(grad_gt).item(), torch.max(grad_gt).item())
+        # print(self.GradComputer.kx, self.GradComputer.ky)
+        # print(torch.min(grad_pred).item(), torch.max(grad_pred).item())
+        # print(torch.min(grad_gt).item(), torch.max(grad_gt).item())
         self.loss_Gs.append(self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1)
 
         self.loss_G = torch.sum(torch.stack(self.loss_Gs))
