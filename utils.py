@@ -62,7 +62,7 @@ class Option(Config):
     direction = 'AtoB'
     netS = 'unet_256'  # network for rgb to depth model
     netG = 'unet_256'  # network for depth to rgb model
-    netD = 'basic'     # network for depth to rgb model
+    netD = 'n_layers'     # network for depth to rgb model
     num_workers = 1     	# number of threads for data loading
     shuffle = True      	# shuffle the data set
     batch_size = 8          # GTX1060 3G Memory
@@ -88,7 +88,7 @@ class Option(Config):
     epoch_count = 1         # the starting epoch count
     niter = 100             # # of iter at starting learning rate
     niter_decay = 100       # # of iter to linearly decay learning rate to zero
-    n_layers_d = 3          # only used if net_type_d == n_layers
+    n_layers_d = 6          # only used if net_type_d == n_layers
     no_lsgan = True         # do *not* use least square GAN, if false, use vanilla GAN
     pool_size = 50
     lambda_L1 = 10.0
