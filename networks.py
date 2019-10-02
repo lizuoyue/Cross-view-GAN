@@ -496,15 +496,15 @@ class NLayerDiscriminator(nn.Module):
             sequence += [nn.Sigmoid()]
 
         self.model = nn.Sequential(*sequence)
-        self.sequence = sequence
+        # self.sequence = sequence
 
     def forward(self, input):
-        for item in self.sequence:
-            print(input.shape)
-            print('\t', item)
-            input = item(input)
-        print(input.shape)
-        return #self.model(input)
+        # for item in self.sequence:
+        #     print(input.shape)
+        #     print('\t', item)
+        #     input = item(input)
+        # print(input.shape)
+        return self.model(input)
 
 
 class PixelDiscriminator(nn.Module):
