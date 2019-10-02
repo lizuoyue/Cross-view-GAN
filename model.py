@@ -508,7 +508,7 @@ class L2RAllModel:
             masked_real = mask_3 * self.g_output_gt
             loss_G_Loss = self.criterionL1_sum(masked_real, masked_fake) * self.lambda_L1
             loss_G_Loss = loss_G_Loss / (mask_sum + 1e-9)
-            print(mask_sum.item(), torch.sum(mask_low_res).item())
+            # print(mask_sum.item(), torch.sum(mask_low_res).item())
 
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
