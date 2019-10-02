@@ -140,10 +140,10 @@ class GANLoss(nn.Module):
         self.register_buffer('fake_label', torch.tensor(target_fake_label))
         if use_lsgan:
             print('Use MSE Loss.')
-            self.loss = nn.MSELoss()
+            self.loss = nn.MSELoss(reduction='none')
         else:
             print('Use BCE Loss.')
-            self.loss = nn.BCELoss()
+            self.loss = nn.BCELoss(reduction='none')
 
     def get_target_tensor(self, pred, target_is_real):
         if target_is_real:
@@ -156,9 +156,13 @@ class GANLoss(nn.Module):
         target_tensor = self.get_target_tensor(pred, target_is_real)
         #print('Pred Min Max', torch.min(pred).data, torch.max(pred).data)
         #input('Press any key to continue...')
-        print(pred.shape)
-        input()
-        return self.loss(pred, target_tensor)
+        loss_raw = self.loss(pred, target_tensor)
+        if weight is None:
+            loss_final = torch.mean(loss_raw)
+        else:
+            loss_raw_masked = weight * loss_raw
+            loss_final = torch.sum(loss_raw_masked) / (torch.sum(weight) + 1e-9)
+        return loss_final
 
 
 # Defines the generator that consists of Resnet blocks between a few
@@ -477,20 +481,26 @@ class NLayerDiscriminator(nn.Module):
         nf_mult = min(2**n_layers, 8)
         sequence += [
             nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
-                      kernel_size=kw, stride=1, padding=padw, bias=use_bias),
+                      kernel_size=3, stride=1, padding=1, bias=use_bias),
             norm_layer(ndf * nf_mult),
             nn.LeakyReLU(0.2, True)
         ]
 
-        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=kw, stride=1, padding=padw)]
+        sequence += [nn.Conv2d(ndf * nf_mult, 1, kernel_size=3, stride=1, padding=1)]
 
         if use_sigmoid:
             sequence += [nn.Sigmoid()]
 
         self.model = nn.Sequential(*sequence)
+        self.sequence = sequence
 
     def forward(self, input):
-        return self.model(input)
+        for item in self.sequence:
+            print(input.shape)
+            print('\t', item)
+            input = item(input)
+        print(input.shape)
+        return #self.model(input)
 
 
 class PixelDiscriminator(nn.Module):
@@ -613,12 +623,17 @@ class XNet(nn.Module):
 
 
 if __name__ == '__main__':
-    norm_layer = get_norm_layer(norm_type='batch')
-    net = ResnetEncoder(3, 32, n_downsampling=5, ngf=32, norm_layer=norm_layer, use_dropout=False, n_blocks=9)
-    a = torch.Tensor(size=(1, 3, 256, 256))
-    b = net(a)
-    c = torch.mean(b, dim=(2,3), keepdim=True)
-    print(c.shape)
+    # norm_layer = get_norm_layer(norm_type='batch')
+    # net = ResnetEncoder(3, 32, n_downsampling=5, ngf=32, norm_layer=norm_layer, use_dropout=False, n_blocks=9)
+    a = torch.Tensor(size=(1, 3, 256, 512))
+    toLow = torch.nn.AvgPool2d(kernel_size=2**5, stride=2**5, padding=0)
+    # b = net(a)
+    # c = torch.mean(b, dim=(2,3), keepdim=True)
+    # print(c.shape)
+    hehe = NLayerDiscriminator(input_nc=3, ndf=64, n_layers=5)
+    hehe(a)
+    print(a)
+    print(toLow(a)>0)
 
 
 

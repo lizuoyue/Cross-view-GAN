@@ -88,7 +88,7 @@ class Option(Config):
     epoch_count = 1         # the starting epoch count
     niter = 100             # # of iter at starting learning rate
     niter_decay = 100       # # of iter to linearly decay learning rate to zero
-    n_layers_d = 6          # only used if net_type_d == n_layers
+    n_layers_d = 5          # only used if net_type_d == n_layers
     no_lsgan = True         # do *not* use least square GAN, if false, use vanilla GAN
     pool_size = 50
     lambda_L1 = 10.0

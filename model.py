@@ -353,6 +353,7 @@ class L2RAllModel:
         self.lambda_L1 = opt.lambda_L1
 
         self.GradComputer = GradComputer(self.device)
+        self.toLowResMask = torch.nn.AvgPool2d(kernel_size=2**opt.n_layers_d, stride=2**opt.n_layers_d, padding=0)
 
         if self.use_sate:
             input_nc = 3 + 1 + self.num_classes + self.sate_encoder_nc
@@ -458,6 +459,7 @@ class L2RAllModel:
         for i in range(self.num_classes):
             mask = self.g_masks[i]
             mask_3 = torch.cat([mask, mask, mask], 1)
+            mask_low_res = self.toLowResMask(mask).float()
 
             # Fake
             # stop backprop to the generator by detaching fake_B
@@ -468,13 +470,13 @@ class L2RAllModel:
 
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake.detach())
-            loss_D_fake = self.criterionGAN(pred_fake, False)
+            loss_D_fake = self.criterionGAN(pred_fake, False, mask_low_res)
 
             # Real
             masked_real = mask_3 * self.g_output_gt
             real = torch.cat([mask, masked_real], 1)
             pred_real = self.netDs[i](real)
-            loss_D_real = self.criterionGAN(pred_real, True)
+            loss_D_real = self.criterionGAN(pred_real, True, mask_low_res)
 
             # Combined loss
             loss = (loss_D_fake + loss_D_real) * 0.5
@@ -491,6 +493,7 @@ class L2RAllModel:
             mask = self.g_masks[i]
             mask_sum = torch.sum(mask)
             mask_3 = torch.cat([mask, mask, mask], 1)
+            mask_low_res = self.toLowResMask(mask).float()
 
             if self.use_multiple_G:
                 masked_fake = mask_3 * self.g_outputs[i]
@@ -499,12 +502,12 @@ class L2RAllModel:
 
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake)
-            loss_G_GAN = self.criterionGAN(pred_fake, True)
+            loss_G_GAN = self.criterionGAN(pred_fake, True, mask_low_res)
 
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
             loss_G_Loss = self.criterionL1_sum(masked_real, masked_fake) * self.lambda_L1
-            loss_G_Loss = loss_G_Loss / torch.max(mask_sum, torch.ones_like(mask_sum))
+            loss_G_Loss = loss_G_Loss / (mask_sum + 1e-9)
 
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
@@ -515,7 +518,7 @@ class L2RAllModel:
         # print(self.GradComputer.kx, self.GradComputer.ky)
         # print(torch.min(grad_pred).item(), torch.max(grad_pred).item())
         # print(torch.min(grad_gt).item(), torch.max(grad_gt).item())
-        self.loss_Gs.append(self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1)
+        self.loss_Gs.append(self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1 * 2)
 
         self.loss_G = torch.sum(torch.stack(self.loss_Gs))
         self.loss_G.backward()
