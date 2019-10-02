@@ -86,7 +86,7 @@ class Option(Config):
     lr = 0.0002             # initial learning rate for adam
     beta1 = 0.5             # momentum term of adam
     epoch_count = 1         # the starting epoch count
-    niter = 100             # # of iter at starting learning rate
+    niter = 50             # # of iter at starting learning rate
     niter_decay = 100       # # of iter to linearly decay learning rate to zero
     n_layers_d = 5          # only used if net_type_d == n_layers
     no_lsgan = True         # do *not* use least square GAN, if false, use vanilla GAN
