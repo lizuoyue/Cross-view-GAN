@@ -153,9 +153,10 @@ class GANLoss(nn.Module):
         return target_tensor.expand_as(pred)
 
     def __call__(self, pred, target_is_real, weight=None):
-        print(pred)
+        print(pred.shape)
         print(target_is_real)
-        print(weight)
+        print(weight.shape)
+        input()
         target_tensor = self.get_target_tensor(pred, target_is_real)
         #print('Pred Min Max', torch.min(pred).data, torch.max(pred).data)
         #input('Press any key to continue...')
@@ -628,16 +629,16 @@ class XNet(nn.Module):
 if __name__ == '__main__':
     # norm_layer = get_norm_layer(norm_type='batch')
     # net = ResnetEncoder(3, 32, n_downsampling=5, ngf=32, norm_layer=norm_layer, use_dropout=False, n_blocks=9)
-    a = torch.Tensor(size=(1, 3, 256, 512))
-    toLow = torch.nn.AvgPool2d(kernel_size=2**5, stride=2**5, padding=0)
+    # a = torch.Tensor(size=(1, 3, 256, 512))
+    # toLow = torch.nn.AvgPool2d(kernel_size=2**5, stride=2**5, padding=0)
     # b = net(a)
     # c = torch.mean(b, dim=(2,3), keepdim=True)
     # print(c.shape)
-    hehe = NLayerDiscriminator(input_nc=3, ndf=64, n_layers=5)
-    hehe(a)
-    print(a)
-    print(toLow(a)>0)
-
+    # hehe = NLayerDiscriminator(input_nc=3, ndf=64, n_layers=5)
+    # hehe(a)
+    # print(a)
+    # print(toLow(a)>0)
+    pass
 
 
 
