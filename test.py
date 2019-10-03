@@ -59,7 +59,7 @@ def test_L2RAll():
     # load model
     model = L2RAllModel()
     model.initialize(opt)
-    model.load_networks(-1)
+    model.load_networks(20)
 
     # do testung
     for idx_batch, data_batch in enumerate(data_loader_test):
