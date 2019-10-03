@@ -164,8 +164,9 @@ class GANLoss(nn.Module):
         if weight is None:
             loss_final = torch.mean(loss_raw)
         else:
+            weight_sum = torch.sum(weight)
             loss_raw_masked = weight * loss_raw
-            loss_final = torch.sum(loss_raw_masked) / (torch.sum(weight) + 1e-9)
+            loss_final = torch.sum(loss_raw_masked) / torch.max(weight_sum, torch.ones_like(weight_sum))
         return loss_final
 
 
