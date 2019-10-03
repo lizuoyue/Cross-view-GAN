@@ -459,7 +459,7 @@ class L2RAllModel:
         for i in range(self.num_classes):
             mask = self.g_masks[i]
             mask_3 = torch.cat([mask, mask, mask], 1)
-            mask_low_res = (self.toLowResMask(mask) > 0).float()
+            mask_low_res = None # (self.toLowResMask(mask) > 0).float()
 
             # Fake
             # stop backprop to the generator by detaching fake_B
@@ -493,7 +493,7 @@ class L2RAllModel:
             mask = self.g_masks[i]
             mask_sum = torch.sum(mask)
             mask_3 = torch.cat([mask, mask, mask], 1)
-            mask_low_res = (self.toLowResMask(mask) > 0.1).float()
+            mask_low_res = None#(self.toLowResMask(mask) > 0.1).float()
 
             if self.use_multiple_G:
                 masked_fake = mask_3 * self.g_outputs[i]

@@ -140,10 +140,10 @@ class GANLoss(nn.Module):
         self.register_buffer('fake_label', torch.tensor(target_fake_label))
         if use_lsgan:
             print('Use MSE Loss.')
-            self.loss = nn.MSELoss(reduction='none')
+            self.loss = nn.MSELoss()#reduction='none')
         else:
             print('Use BCE Loss.')
-            self.loss = nn.BCELoss(reduction='none')
+            self.loss = nn.BCELoss()#reduction='none')
 
     def get_target_tensor(self, pred, target_is_real):
         if target_is_real:
@@ -162,7 +162,7 @@ class GANLoss(nn.Module):
         #input('Press any key to continue...')
         loss_raw = self.loss(pred, target_tensor)
         if weight is None:
-            loss_final = torch.mean(loss_raw)
+            loss_final = loss_raw#torch.mean(loss_raw)
         else:
             weight_sum = torch.sum(weight)
             loss_raw_masked = weight * loss_raw
