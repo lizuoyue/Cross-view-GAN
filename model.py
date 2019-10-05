@@ -510,6 +510,9 @@ class L2RAllModel:
             loss_G_Loss = loss_G_Loss / torch.max(mask_sum, torch.ones_like(mask_sum))
             # print(mask_sum.item(), torch.sum(mask_low_res).item())
 
+            print(i, 'gan', loss_G_GAN.item())
+            print(i, 'g', loss_G_Loss.item())
+
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
 
@@ -519,7 +522,9 @@ class L2RAllModel:
         # print(self.GradComputer.kx, self.GradComputer.ky)
         # print(torch.min(grad_pred).item(), torch.max(grad_pred).item())
         # print(torch.min(grad_gt).item(), torch.max(grad_gt).item())
-        self.loss_Gs.append(self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1)
+        loss_grad = self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1
+        print(loss_grad.item())
+        self.loss_Gs.append(loss_grad)
 
         self.loss_G = torch.sum(torch.stack(self.loss_Gs))
         self.loss_G.backward()

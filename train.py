@@ -36,7 +36,7 @@ def train_L2R_Zuoyue():
     opt.no_lsgan = True
 
     # load data  
-    root_dir_train = opt.root_dir + '/train'
+    root_dir_train = opt.root_dir + '/test'
     dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=True, coarse=opt.coarse)
     data_loader_train = DataLoader(dataset_train,batch_size=opt.batch_size,
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
