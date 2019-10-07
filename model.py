@@ -307,7 +307,11 @@ class L2RModel:
 
 
 
-
+def check_nan(var):
+    if (var != var).any():
+        raise ValueError('This var has nan!')
+    else:
+        return
 
 class GradComputer(object):
     def __init__(self, device):
@@ -489,16 +493,25 @@ class L2RAllModel:
     def backward_G(self):
         self.loss_Gs = []
         for i in range(self.num_classes):
+        	print('class', i)
             # First, G(A) should fake the discriminator
             mask = self.g_masks[i]
             mask_sum = torch.sum(mask)
             mask_3 = torch.cat([mask, mask, mask], 1)
             mask_low_res = (self.toLowResMask(mask) > 0.1).float()
 
+            check_nan(mask)
+            check_nan(mask_sum)
+            check_nan(mask_3)
+            check_nan(mask_low_res)
+
             if self.use_multiple_G:
                 masked_fake = mask_3 * self.g_outputs[i]
+                check_nan(self.g_outputs[i])
             else:
                 masked_fake = mask_3 * self.g_output
+                check_nan(self.g_output)
+            check_nan(masked_fake)
 
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake)
@@ -506,26 +519,24 @@ class L2RAllModel:
 
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
+            check_nan(masked_real)
             loss_G_Loss = self.criterionL1_sum(masked_real, masked_fake) * self.lambda_L1
-            print(i, 'bf/', loss_G_Loss.item())
             loss_G_Loss = loss_G_Loss / torch.max(mask_sum, torch.ones_like(mask_sum))
-            print(i, 'af/', loss_G_Loss.item())
-            print(i, 'msk', mask_sum.item(), torch.sum(mask_low_res).item())
-
-            print(i, 'gan', loss_G_GAN.item())
-            print(i, 'g  ', loss_G_Loss.item())
+            check_nan(loss_G_Loss)
 
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
+
+        check_nan(self.g_output)
+        check_nan(self.g_output_gt)
 
         # Grad loss
         grad_pred = self.GradComputer.run(self.g_output)
         grad_gt = self.GradComputer.run(self.g_output_gt)
         # print(self.GradComputer.kx, self.GradComputer.ky)
-        print(torch.min(grad_pred).item(), torch.max(grad_pred).item())
-        print(torch.min(grad_gt).item(), torch.max(grad_gt).item())
+        check_nan(grad_pred)
+        check_nan(grad_gt)
         loss_grad = self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1
-        print(loss_grad.item())
         self.loss_Gs.append(loss_grad)
 
         self.loss_G = torch.sum(torch.stack(self.loss_Gs))
