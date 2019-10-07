@@ -10,7 +10,7 @@ from skimage import io, transform, color
 from skimage.transform import resize
 import time
 
-from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel, L2RAllModel
+from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel, L2RAllModel, L2RNoiseModel
 from utils import Option
 from dataset import R2DDataLoader, D2LDataLoader, L2RDataLoader, DLRDataLoader, RDLRDataLoader, DLLDataLoader, L2RAllDataLoader
 
@@ -28,7 +28,7 @@ def train_L2R_Zuoyue():
     # set options
     opt = Option()
     opt.root_dir = root+'/dataset/L2R_Zuoyue'
-    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Sate'
+    opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Noise'
     opt.gpu_ids = [0]
     opt.batch_size = 16
     opt.coarse = False
@@ -43,7 +43,8 @@ def train_L2R_Zuoyue():
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
 
     # load model
-    model = L2RAllModel()
+    # model = L2RAllModel()
+    model = L2RNoiseModel()
     model.initialize(opt)
     # model.load_networks(50)
 
