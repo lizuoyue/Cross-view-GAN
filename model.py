@@ -493,7 +493,7 @@ class L2RAllModel:
     def backward_G(self):
         self.loss_Gs = []
         for i in range(self.num_classes):
-        	print('class', i)
+            print('class', i)
             # First, G(A) should fake the discriminator
             mask = self.g_masks[i]
             mask_sum = torch.sum(mask)
