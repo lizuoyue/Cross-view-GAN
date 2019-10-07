@@ -493,7 +493,7 @@ class L2RAllModel:
             mask = self.g_masks[i]
             mask_sum = torch.sum(mask)
             mask_3 = torch.cat([mask, mask, mask], 1)
-            mask_low_res = None#(self.toLowResMask(mask) > 0.1).float()
+            mask_low_res = (self.toLowResMask(mask) > 0.1).float()
 
             if self.use_multiple_G:
                 masked_fake = mask_3 * self.g_outputs[i]
@@ -502,7 +502,7 @@ class L2RAllModel:
 
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake)
-            loss_G_GAN = self.criterionGAN(pred_fake, True, mask_low_res)
+            loss_G_GAN = self.criterionGAN(pred_fake, True, None)
 
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
