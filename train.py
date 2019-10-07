@@ -34,15 +34,16 @@ def train_L2R_Zuoyue():
     opt.coarse = False
     opt.pool_size = 0
     opt.no_lsgan = True
+    opt.sate_encoder_nc = 32
 
     # load data  
     root_dir_train = opt.root_dir + '/train'
-    dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=True, coarse=opt.coarse)
+    dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=True, coarse=opt.coarse, noise_dim=opt.sate_encoder_nc)
     data_loader_train = DataLoader(dataset_train,batch_size=opt.batch_size,
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
 
     # load model
-    model = L2RAllModel()
+    model = L2RNoiseModel()#L2RAllModel()
     model.initialize(opt)
     # model.load_networks(50)
 

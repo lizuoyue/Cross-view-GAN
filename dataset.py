@@ -15,6 +15,7 @@ from utils import Option
 #import matplotlib.pylab as plt
 from sklearn.model_selection import train_test_split
 import re
+import hashlib
 
 
 # Load Data RGB to Depth data
@@ -268,7 +269,7 @@ def transferToLongTensor(filename):
     return img
 
 class L2RAllDataLoader(Dataset):
-    def __init__(self, root_dir, train=True, coarse=True):
+    def __init__(self, root_dir, train=True, coarse=True, noise_dim=64):
         """
         Args:
         :param root_dir (string): Directory with all the images
@@ -287,34 +288,32 @@ class L2RAllDataLoader(Dataset):
         self.root_dir = root_dir
         self.train = train
         self.coarse = coarse
+        self.noise_dim = noise_dim
 
     def __len__(self):
         return len(self.img_id)
 
     def __getitem__(self, idx):
-        if self.train:
-            street_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
-            street_label = transferToLongTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
-            proj_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
-            proj_depth = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png')
-            sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
-        else:
-            street_label = transferToLongTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
-            proj_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
-            proj_depth = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png')
-            sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
+        street_label = transferToLongTensor(self.root_dir + '/' + self.img_id[idx] + '_street_sem_label.png')
+        proj_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_rgb.png')
+        proj_depth = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_proj_depth.png')
+        sate_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_sate_rgb.jpg')
+
+        seed = int(hashlib.md5(self.img_id[idx].encode()).hexdigest(), 16) % (2 ** 32)
+        np.random.seed(seed)
+        noise = np.random.normal(0, 1, street_label.shape[:2] + (self.noise_dim,))
+            
 
         if self.train:
-            # print('Label:')
-            # print('  ', street_label.shape, street_label.dtype)
-            # print('  ', torch.min(street_label).item(), torch.max(street_label).item())
+            street_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
             return {
                 'street_rgb': street_rgb,
                 'street_label': street_label,
                 'proj_rgb': proj_rgb,
                 'proj_depth': proj_depth,
                 'sate_rgb': sate_rgb,
-                'img_id': self.img_id[idx]
+                'img_id': self.img_id[idx],
+                'noise': noise,
             }
         else:
             return {
@@ -322,7 +321,8 @@ class L2RAllDataLoader(Dataset):
                 'proj_rgb': proj_rgb,
                 'proj_depth': proj_depth,
                 'sate_rgb': sate_rgb,
-                'img_id': self.img_id[idx]
+                'img_id': self.img_id[idx],
+                'noise': noise,
             }     
 
 

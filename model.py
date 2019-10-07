@@ -307,6 +307,30 @@ class L2RModel:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def check_nan(var):
     if (var != var).any():
         raise ValueError('This var has nan!')
@@ -443,6 +467,8 @@ class L2RAllModel:
             self.sate_ft = torch.mean(sate_ft, dim=(2,3), keepdim=True)
             self.sate_ft = self.sate_ft.repeat(1, 1, h, w)
             self.g_input = torch.cat([self.g_input_label, self.g_input_rgbd, self.sate_ft], 1)
+            check_nan(self.e_input_rgb)
+            check_nan(self.sate_ft)
         else:
             self.g_input = torch.cat([self.g_input_label, self.g_input_rgbd], 1)
 
@@ -450,6 +476,7 @@ class L2RAllModel:
             self.g_outputs = []
             for i in range(self.num_classes):
                 self.g_outputs.append(self.netGs[i](self.g_input))
+                check_nan(self.g_outputs[-1])
             li = []
             for mask, g_out in zip(self.g_masks, self.g_outputs):
                 mask_3 = torch.cat([mask, mask, mask], 1)
@@ -500,18 +527,10 @@ class L2RAllModel:
             mask_3 = torch.cat([mask, mask, mask], 1)
             mask_low_res = (self.toLowResMask(mask) > 0.1).float()
 
-            check_nan(mask)
-            check_nan(mask_sum)
-            check_nan(mask_3)
-            check_nan(mask_low_res)
-
             if self.use_multiple_G:
                 masked_fake = mask_3 * self.g_outputs[i]
-                check_nan(self.g_outputs[i])
             else:
                 masked_fake = mask_3 * self.g_output
-                check_nan(self.g_output)
-            check_nan(masked_fake)
 
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake)
@@ -519,23 +538,16 @@ class L2RAllModel:
 
             # Second, G(A) = B
             masked_real = mask_3 * self.g_output_gt
-            check_nan(masked_real)
             loss_G_Loss = self.criterionL1_sum(masked_real, masked_fake) * self.lambda_L1
             loss_G_Loss = loss_G_Loss / torch.max(mask_sum, torch.ones_like(mask_sum))
-            check_nan(loss_G_Loss)
 
             loss_G = loss_G_GAN + loss_G_Loss
             self.loss_Gs.append(loss_G)
-
-        check_nan(self.g_output)
-        check_nan(self.g_output_gt)
 
         # Grad loss
         grad_pred = self.GradComputer.run(self.g_output)
         grad_gt = self.GradComputer.run(self.g_output_gt)
         # print(self.GradComputer.kx, self.GradComputer.ky)
-        check_nan(grad_pred)
-        check_nan(grad_gt)
         loss_grad = self.criterionL1_mean(grad_gt, grad_pred) * self.lambda_L1
         self.loss_Gs.append(loss_grad)
 
@@ -623,6 +635,272 @@ class L2RAllModel:
                 for i in range(self.num_classes):
                     self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_latest.pt'%i,
                     map_location=lambda storage, loc: storage.cuda(0)))  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class L2RNoiseModel:
+    def name(self):
+        return 'L2RNoiseModel'
+
+    def initialize(self, opt):
+        # Added
+        self.num_classes = opt.num_classes
+        self.use_multiple_G = opt.use_multiple_G
+        self.sate_encoder_nc = opt.sate_encoder_nc
+
+        self.direction = opt.direction
+        self.is_train = opt.is_train
+        self.gpu_ids = opt.gpu_ids
+        self.save_dir = opt.checkpoints_dir
+        self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')   
+        self.lambda_L1 = opt.lambda_L1
+
+        input_nc = self.num_classes + self.sate_encoder_nc
+
+        # load/define networks
+        if self.use_multiple_G:
+            self.netGs = []
+            for i in range(self.num_classes):
+                self.netGs.append(networks.define_G(input_nc, 3, opt.ngf, opt.netG,
+                    opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids))
+        else:
+            self.netG = networks.define_G(input_nc, 3, opt.ngf, opt.netG, opt.norm_G_D, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
+
+        if self.is_train:
+            self.netDs = []
+            for i in range(self.num_classes):
+                self.netDs.append(networks.define_D(4, opt.ndf, opt.netD,
+                                          opt.n_layers_d, opt.norm_G_D, opt.no_lsgan, opt.init_type, opt.init_gain, self.gpu_ids))
+
+        if self.is_train:
+            # define loss functions
+            self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan).to(self.device)
+            self.criterionL1_sum = torch.nn.L1Loss(reduction='sum')
+            self.criterionL1_mean = torch.nn.L1Loss(reduction='mean')
+
+            # initialize optimizers
+            self.optimizers = []
+            if self.use_multiple_G:
+                self.optimizer_Gs = []
+                for i in range(self.num_classes):
+                    self.optimizer_Gs.append(torch.optim.Adam(self.netGs[i].parameters(),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999)))
+                self.optimizers.extend(self.optimizer_Gs)
+            else:
+                self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999))
+                self.optimizers.append(self.optimizer_G)
+
+            self.optimizer_Ds = []
+            for i in range(self.num_classes):
+                self.optimizer_Ds.append(torch.optim.Adam(self.netDs[i].parameters(),
+                                                lr=opt.lr, betas=(opt.beta1, 0.999)))
+            self.optimizers.extend(self.optimizer_Ds)
+
+    def set_input(self, input):
+        self.real_semantic = input['street_label']
+        self.g_input_label = torch.nn.functional.one_hot(input['street_label'][:, 0, ...],
+            num_classes=self.num_classes).float().to(self.device)
+        self.g_input_label = self.g_input_label.permute(0, 3, 1, 2)
+        self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(self.num_classes)]
+        self.g_noise = input['street_noise']
+
+        self.img_id = input['img_id']
+        if self.is_train:
+            self.g_output_gt = input['street_rgb'].to(self.device)
+
+    def set_requires_grad(self, nets, requires_grad=False):
+        if not isinstance(nets, list):
+            nets = [nets]
+        for net in nets:
+            if net is not None:
+                for param in net.parameters():
+                    param.requires_grad = requires_grad
+
+    def forward(self):
+		self.g_input = torch.cat([self.g_input_label, self.g_noise], 1)
+
+        if self.use_multiple_G:
+            self.g_outputs = []
+            for i in range(self.num_classes):
+                self.g_outputs.append(self.netGs[i](self.g_input))
+            li = []
+            for mask, g_out in zip(self.g_masks, self.g_outputs):
+                mask_3 = torch.cat([mask, mask, mask], 1)
+                li.append(mask_3 * g_out)
+            self.g_output = torch.sum(torch.stack(li), dim=0)
+        else:
+            self.g_output = self.netG(self.g_input)
+
+    def backward_D(self):
+        self.loss_Ds = []
+        for i in range(self.num_classes):
+            mask = self.g_masks[i]
+            mask_3 = torch.cat([mask, mask, mask], 1)
+
+            # Fake
+            # stop backprop to the generator by detaching fake_B
+            if self.use_multiple_G:
+                masked_fake = mask_3 * self.g_outputs[i]
+            else:
+                masked_fake = mask_3 * self.g_output
+
+            fake = torch.cat([mask, masked_fake], 1)
+            pred_fake = self.netDs[i](fake.detach())
+            loss_D_fake = self.criterionGAN(pred_fake, False)
+
+            # Real
+            masked_real = mask_3 * self.g_output_gt
+            real = torch.cat([mask, masked_real], 1)
+            pred_real = self.netDs[i](real)
+            loss_D_real = self.criterionGAN(pred_real, True)
+
+            # Combined loss
+            loss = (loss_D_fake + loss_D_real) * 0.5
+            self.loss_Ds.append(loss)
+
+        self.loss_D = torch.sum(torch.stack(self.loss_Ds))
+        self.loss_D.backward()
+
+
+    def backward_G(self):
+        self.loss_Gs = []
+        for i in range(self.num_classes):
+            # First, G(A) should fake the discriminator
+            mask = self.g_masks[i]
+            mask_sum = torch.sum(mask)
+            mask_3 = torch.cat([mask, mask, mask], 1)
+
+            if self.use_multiple_G:
+                masked_fake = mask_3 * self.g_outputs[i]
+            else:
+                masked_fake = mask_3 * self.g_output
+
+            fake = torch.cat([mask, masked_fake], 1)
+            pred_fake = self.netDs[i](fake)
+            loss_G_GAN = self.criterionGAN(pred_fake, True)
+
+            # Second, G(A) = B
+            masked_real = mask_3 * self.g_output_gt
+            loss_G_Loss = self.criterionL1_sum(masked_real, masked_fake) * self.lambda_L1
+            loss_G_Loss = loss_G_Loss / torch.max(mask_sum, torch.ones_like(mask_sum))
+
+            loss_G = loss_G_GAN + loss_G_Loss
+            self.loss_Gs.append(loss_G)
+
+        self.loss_G = torch.sum(torch.stack(self.loss_Gs))
+        self.loss_G.backward()
+
+    def optimize_parameters(self):
+        self.forward()
+        # update D
+        if self.use_multiple_G:
+            self.set_requires_grad(self.netGs, False)
+        else:
+            self.set_requires_grad(self.netG, False)
+
+        self.set_requires_grad(self.netDs, True)
+        for i in range(self.num_classes):
+            self.optimizer_Ds[i].zero_grad()
+        self.backward_D()
+        for i in range(self.num_classes):
+            self.optimizer_Ds[i].step()
+
+        # update G
+        self.set_requires_grad(self.netDs, False)
+        if self.use_multiple_G:
+            self.set_requires_grad(self.netGs, True)
+            for i in range(self.num_classes):
+                self.optimizer_Gs[i].zero_grad()
+            self.backward_G()
+            for i in range(self.num_classes):
+                self.optimizer_Gs[i].step()
+        else:
+            self.set_requires_grad(self.netG, True)
+            self.optimizer_G.zero_grad()
+            self.backward_G()
+            self.optimizer_G.step()
+
+    def save_networks(self, epoch):
+        if self.use_multiple_G:
+            for i in range(self.num_classes):
+                torch.save(self.netGs[i].state_dict(), self.save_dir +'/model_G%d_'%i+str(epoch)+'.pt')
+                torch.save(self.netGs[i].state_dict(), self.save_dir +'/model_G%d_latest.pt'%i)
+        else:
+            torch.save(self.netG.state_dict(), self.save_dir +'/model_G_'+str(epoch)+'.pt')
+            torch.save(self.netG.state_dict(), self.save_dir +'/model_G_latest.pt')
+        for i in range(self.num_classes):
+            torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt')
+            torch.save(self.netDs[i].state_dict(), self.save_dir +'/model_D%d_latest.pt'%i) 
+
+    # load models from the disk
+    def load_networks(self, epoch):
+        if epoch >= 0:
+            if self.use_multiple_G:
+                for i in range(self.num_classes):
+                    self.netGs[i].load_state_dict(torch.load(self.save_dir +'/model_G%s_'%i+str(epoch)+'.pt',
+                    map_location=lambda storage, loc: storage.cuda(0)))
+            else:
+                self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_'+str(epoch)+'.pt',
+                map_location=lambda storage, loc: storage.cuda(0)))
+            if self.is_train:
+                for i in range(self.num_classes):
+                    self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_'%i+str(epoch)+'.pt',
+                    map_location=lambda storage, loc: storage.cuda(0)))            
+        else:
+            if self.use_multiple_G:
+                for i in range(self.num_classes):
+                    self.netGs[i].load_state_dict(torch.load(self.save_dir +'/model_G%s_latest.pt'%i,
+                    map_location=lambda storage, loc: storage.cuda(0)))
+            else:
+                self.netG.load_state_dict(torch.load(self.save_dir +'/model_G_latest.pt',
+                map_location=lambda storage, loc: storage.cuda(0)))
+            if self.is_train:
+                for i in range(self.num_classes):
+                    self.netDs[i].load_state_dict(torch.load(self.save_dir +'/model_D%d_latest.pt'%i,
+                    map_location=lambda storage, loc: storage.cuda(0)))  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
