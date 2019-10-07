@@ -43,7 +43,7 @@ def train_L2R_Zuoyue():
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
 
     # load model
-    model = L2RNoiseModel()#L2RAllModel()
+    model = L2RAllModel()
     model.initialize(opt)
     # model.load_networks(50)
 
