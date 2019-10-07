@@ -731,7 +731,7 @@ class L2RNoiseModel:
             num_classes=self.num_classes).float().to(self.device)
         self.g_input_label = self.g_input_label.permute(0, 3, 1, 2)
         self.g_masks = [(input['street_label'] == i).float().to(self.device) for i in range(self.num_classes)]
-        self.g_noise = input['street_noise']
+        self.g_noise = input['noise']
 
         self.img_id = input['img_id']
         if self.is_train:
