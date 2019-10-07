@@ -301,8 +301,8 @@ class L2RAllDataLoader(Dataset):
 
         seed = int(hashlib.md5(self.img_id[idx].encode()).hexdigest(), 16) % (2 ** 32)
         np.random.seed(seed)
-        noise = np.random.normal(0, 1, street_label.shape[:2] + (self.noise_dim,))
-            
+        noise = np.random.normal(0, 1, street_label.shape[:2] + (self.noise_dim,)).astype(np.float32)
+        noise = torch.from_numpy(noise)
 
         if self.train:
             street_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
