@@ -746,8 +746,6 @@ class L2RNoiseModel:
                     param.requires_grad = requires_grad
 
     def forward(self):
-        print(self.g_input_label.shape)
-        print(self.g_noise.shape)
         self.g_input = torch.cat([self.g_input_label, self.g_noise], 1)
 
         if self.use_multiple_G:
