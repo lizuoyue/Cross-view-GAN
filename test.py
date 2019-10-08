@@ -24,15 +24,16 @@ from geo_process_layer import depth2voxel, voxel2pano
 
 import socket
 
+opt = Option()
 host_name = socket.gethostname()
 if host_name == 'cnb-d102-04a':
     root = '/local/zoli/xiaohu_iccv2019'
     noise_b = False
-    bs = 16
+    opt.batch_size = 16
 elif host_name == 'cvg-desktop-17-ubuntu':
     root = '/home/zoli/xiaohu_iccv2019'
     noise_b = True
-    bs = 8
+    opt.batch_size = 8
 else:
     raise ValueError('Root Error!')
 
@@ -41,8 +42,7 @@ def test_L2RAll():
     opt = Option()
     opt.root_dir = root+'/dataset/L2R_Zuoyue'
     opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Noise'
-    opt.gpu_ids = [0]
-    opt.batch_size = bs
+    opt.gpu_ids = []
     opt.coarse = False
     opt.pool_size = 0
     opt.no_lsgan = True
