@@ -672,7 +672,7 @@ class L2RNoiseModel:
     def initialize(self, opt):
         # Added
         self.num_classes = opt.num_classes
-        self.use_multiple_G = False#opt.use_multiple_G
+        self.use_multiple_G = opt.use_multiple_G
         self.sate_encoder_nc = opt.sate_encoder_nc
 
         self.direction = opt.direction

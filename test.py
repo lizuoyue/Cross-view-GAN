@@ -30,10 +30,12 @@ if host_name == 'cnb-d102-04a':
     root = '/local/zoli/xiaohu_iccv2019'
     noise_b = False
     opt.batch_size = 16
+    opt.use_multiple_G = True
 elif host_name == 'cvg-desktop-17-ubuntu':
     root = '/home/zoli/xiaohu_iccv2019'
     noise_b = True
     opt.batch_size = 8
+    opt.use_multiple_G = False
 else:
     raise ValueError('Root Error!')
 
