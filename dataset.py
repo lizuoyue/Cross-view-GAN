@@ -289,6 +289,7 @@ class L2RAllDataLoader(Dataset):
         self.train = train
         self.coarse = coarse
         self.noise_dim = noise_dim
+        self.noise_broadcast = noise_broadcast
 
     def __len__(self):
         return len(self.img_id)
@@ -301,7 +302,7 @@ class L2RAllDataLoader(Dataset):
 
         seed = int(hashlib.md5(self.img_id[idx].encode()).hexdigest(), 16) % (2 ** 32)
         np.random.seed(seed)
-        if noise_broadcast:
+        if self.noise_broadcast:
             noise = np.random.normal(0, 1, (self.noise_dim, 1, 1)).astype(np.float32)
             noise = torch.from_numpy(noise)
             noise = noise.repeat(1, street_label.shape[1], street_label.shape[2])
