@@ -29,7 +29,7 @@ host_name = socket.gethostname()
 if host_name == 'cnb-d102-04a':
     root = '/local/zoli/xiaohu_iccv2019'
     noise_b = False
-    opt.batch_size = 8
+    opt.batch_size = 4
     opt.use_multiple_G = True
 elif host_name == 'cvg-desktop-17-ubuntu':
     root = '/home/zoli/xiaohu_iccv2019'
@@ -44,7 +44,7 @@ def test_L2RAll():
     opt = Option()
     opt.root_dir = root+'/dataset/L2R_Zuoyue'
     opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Noise'
-    opt.gpu_ids = []
+    opt.gpu_ids = [0]
     opt.coarse = False
     opt.pool_size = 0
     opt.no_lsgan = True
