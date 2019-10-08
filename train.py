@@ -14,15 +14,15 @@ from model import R2DModel, D2LModel, L2RModel, DLRModel, RDLRModel, DLLModel, L
 from utils import Option
 from dataset import R2DDataLoader, D2LDataLoader, L2RDataLoader, DLRDataLoader, RDLRDataLoader, DLLDataLoader, L2RAllDataLoader
 
-root = '/local/zoli/xiaohu_iccv2019'
+import socket
 
-
-
-
-
-
-
-
+host_name = socket.gethostname()
+if host_name == 'cnb-d102-04a':
+    root = '/local/zoli/xiaohu_iccv2019'
+elif host_name == 'cvg-desktop-17-ubuntu':
+    root = '/home/zoli/xiaohu_iccv2019'
+else:
+    raise ValueError('Root Error!')
 
 def train_L2R_Zuoyue():
     # set options

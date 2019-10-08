@@ -22,16 +22,15 @@ from utils import Option
 from dataset import R2DDataLoader, D2LDataLoader, L2RDataLoader, DLRDataLoader, RDLRDataLoader, DLLDataLoader, L2RAllDataLoader
 from geo_process_layer import depth2voxel, voxel2pano
 
-root = '/local/zoli/xiaohu_iccv2019'
+import socket
 
-
-
-
-
-
-
-
-
+host_name = socket.gethostname()
+if host_name == 'cnb-d102-04a':
+    root = '/local/zoli/xiaohu_iccv2019'
+elif host_name == 'cvg-desktop-17-ubuntu':
+    root = '/home/zoli/xiaohu_iccv2019'
+else:
+    raise ValueError('Root Error!')
 
 
 
