@@ -269,7 +269,7 @@ def transferToLongTensor(filename):
     return img
 
 class L2RAllDataLoader(Dataset):
-    def __init__(self, root_dir, train=True, coarse=True, noise_dim=64):
+    def __init__(self, root_dir, train=True, coarse=True, noise_dim=64, noise_broadcast=False):
         """
         Args:
         :param root_dir (string): Directory with all the images
@@ -301,8 +301,13 @@ class L2RAllDataLoader(Dataset):
 
         seed = int(hashlib.md5(self.img_id[idx].encode()).hexdigest(), 16) % (2 ** 32)
         np.random.seed(seed)
-        noise = np.random.normal(0, 1, (self.noise_dim,) + street_label.shape[1:3]).astype(np.float32)
-        noise = torch.from_numpy(noise)
+        if noise_broadcast:
+            noise = np.random.normal(0, 1, (self.noise_dim, 1, 1)).astype(np.float32)
+            noise = torch.from_numpy(noise)
+            noise = noise.repeat(1, street_label.shape[1], street_label.shape[2])
+        else:
+            noise = np.random.normal(0, 1, (self.noise_dim,) + street_label.shape[1:3]).astype(np.float32)
+            noise = torch.from_numpy(noise)
 
         if self.train:
             street_rgb = transferToScaledFloatTensor(self.root_dir + '/' + self.img_id[idx] + '_street_rgb.png')
