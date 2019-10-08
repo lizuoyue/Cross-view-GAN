@@ -252,12 +252,13 @@ class L2RDataLoader(Dataset):
 
 
 
-def transferToScaledFloatTensor(filename, grad=False):
+def transferToScaledFloatTensor(filename):
     img = io.imread(filename).astype(np.uint8)
     if len(img.shape) == 2:
         img = img[..., np.newaxis]
     img = transforms.ToTensor()(img)
-    img = transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))(img).float()      
+    nc = img.shape[2]
+    img = transforms.Normalize((0.5,) * nc, (0.5,) * nc)(img).float()      
     return img
 
 def transferToLongTensor(filename):
