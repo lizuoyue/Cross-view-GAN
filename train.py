@@ -19,8 +19,12 @@ import socket
 host_name = socket.gethostname()
 if host_name == 'cnb-d102-04a':
     root = '/local/zoli/xiaohu_iccv2019'
+    noise_b = False
+    bs = 16
 elif host_name == 'cvg-desktop-17-ubuntu':
     root = '/home/zoli/xiaohu_iccv2019'
+    noise_b = True
+    bs = 8
 else:
     raise ValueError('Root Error!')
 
@@ -30,7 +34,7 @@ def train_L2R_Zuoyue():
     opt.root_dir = root+'/dataset/L2R_Zuoyue'
     opt.checkpoints_dir = root+'/checkpoints/L2R_Zuoyue_Noise'
     opt.gpu_ids = [0]
-    opt.batch_size = 16
+    opt.batch_size = bs
     opt.coarse = False
     opt.pool_size = 0
     opt.no_lsgan = True
@@ -38,7 +42,7 @@ def train_L2R_Zuoyue():
 
     # load data  
     root_dir_train = opt.root_dir + '/train'
-    dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=True, coarse=opt.coarse, noise_dim=opt.sate_encoder_nc, noise_broadcast=True)
+    dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=True, coarse=opt.coarse, noise_dim=opt.sate_encoder_nc, noise_broadcast=noise_b)
     data_loader_train = DataLoader(dataset_train,batch_size=opt.batch_size,
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
 
