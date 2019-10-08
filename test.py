@@ -52,7 +52,7 @@ def test_L2RAll():
 
     # load data  
     root_dir_train = opt.root_dir + '/test'
-    dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=False, coarse=opt.coarse)
+    dataset_train = L2RAllDataLoader(root_dir=root_dir_train, train=False, coarse=opt.coarse, noise_dim=opt.sate_encoder_nc)
     data_loader_test = DataLoader(dataset_train,batch_size=opt.batch_size,
                                 shuffle=opt.shuffle, num_workers=opt.num_workers, pin_memory=opt.pin_memory)
 
