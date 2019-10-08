@@ -520,7 +520,6 @@ class L2RAllModel:
     def backward_G(self):
         self.loss_Gs = []
         for i in range(self.num_classes):
-            print('class', i)
             # First, G(A) should fake the discriminator
             mask = self.g_masks[i]
             mask_sum = torch.sum(mask)
@@ -673,7 +672,7 @@ class L2RNoiseModel:
     def initialize(self, opt):
         # Added
         self.num_classes = opt.num_classes
-        self.use_multiple_G = opt.use_multiple_G
+        self.use_multiple_G = False#opt.use_multiple_G
         self.sate_encoder_nc = opt.sate_encoder_nc
 
         self.direction = opt.direction
@@ -682,6 +681,7 @@ class L2RNoiseModel:
         self.save_dir = opt.checkpoints_dir
         self.device = torch.device('cuda:{}'.format(self.gpu_ids[0])) if self.gpu_ids else torch.device('cpu')   
         self.lambda_L1 = opt.lambda_L1
+        self.toLowResMask = torch.nn.AvgPool2d(kernel_size=2**opt.n_layers_d, stride=2**opt.n_layers_d, padding=0)
 
         input_nc = self.num_classes + self.sate_encoder_nc
 
@@ -765,6 +765,7 @@ class L2RNoiseModel:
         for i in range(self.num_classes):
             mask = self.g_masks[i]
             mask_3 = torch.cat([mask, mask, mask], 1)
+            mask_low_res = (self.toLowResMask(mask) > 0.1).float()
 
             # Fake
             # stop backprop to the generator by detaching fake_B
@@ -775,13 +776,13 @@ class L2RNoiseModel:
 
             fake = torch.cat([mask, masked_fake], 1)
             pred_fake = self.netDs[i](fake.detach())
-            loss_D_fake = self.criterionGAN(pred_fake, False)
+            loss_D_fake = self.criterionGAN(pred_fake, False, mask_low_res)
 
             # Real
             masked_real = mask_3 * self.g_output_gt
             real = torch.cat([mask, masked_real], 1)
             pred_real = self.netDs[i](real)
-            loss_D_real = self.criterionGAN(pred_real, True)
+            loss_D_real = self.criterionGAN(pred_real, True, mask_low_res)
 
             # Combined loss
             loss = (loss_D_fake + loss_D_real) * 0.5

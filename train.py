@@ -24,7 +24,7 @@ if host_name == 'cnb-d102-04a':
 elif host_name == 'cvg-desktop-17-ubuntu':
     root = '/home/zoli/xiaohu_iccv2019'
     noise_b = True
-    bs = 4
+    bs = 1
 else:
     raise ValueError('Root Error!')
 
