@@ -7,6 +7,7 @@ import tqdm
 target = '../dataset/L2R_Bicycle'
 os.makedirs(target, exist_ok = True)
 for mode in ['/train', '/test']:
+	os.makedirs(target + mode, exist_ok = True)
 	dataset_dir = '../dataset/L2R_Zuoyue' + mode
 	path = dataset_dir + '/*_street_sem2.png'
 	files = glob.glob(path)
@@ -15,4 +16,4 @@ for mode in ['/train', '/test']:
 		rgb = np.array(Image.open(file.replace('sem2', 'rgb')))
 		bi = np.concatenate([sem, rgb], 1)
 		basename = '/' + os.path.basename(file)
-		Image.fromarray(bi).save(target + basename.replace('_street_sem2', ''))
+		Image.fromarray(bi).save(target + mode + basename.replace('_street_sem2', ''))
