@@ -14,6 +14,5 @@ for mode in ['/train', '/test']:
 		sem = np.array(Image.open(file))
 		rgb = np.array(Image.open(file.replace('sem2', 'rgb')))
 		bi = np.concatenate([sem, rgb], 1)
-		print(bi.shape)
 		basename = '/' + os.path.basename(file)
 		Image.fromarray(bi).save(target + basename.replace('_street_sem2', ''))
