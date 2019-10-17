@@ -14,8 +14,8 @@ two_dim = np.array([
 
 target = '../dataset/L2R_Bicycle_No_Depth'
 os.makedirs(target, exist_ok = True)
-for mode in ['/train', '/test']:
-	os.makedirs(target + mode, exist_ok = True)
+for mode in ['/test', '/train']:
+	os.makedirs(target + mode.replace('test', 'val'), exist_ok = True)
 	dataset_dir = '../dataset/L2R_Zuoyue' + mode
 	path = dataset_dir + '/*_street_sem_label.png'
 	files = glob.glob(path)
